@@ -1,0 +1,52 @@
+{
+  "name": "Pesaje",
+  "type": "object",
+  "properties": {
+    "animal_id": {
+      "type": "string",
+      "description": "ID del animal"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del pesaje"
+    },
+    "peso": {
+      "type": "number",
+      "description": "Peso en kg"
+    },
+    "peso_anterior": {
+      "type": "number",
+      "description": "Peso del pesaje anterior"
+    },
+    "diferencia_peso": {
+      "type": "number",
+      "description": "Diferencia de peso con pesaje anterior"
+    },
+    "dias_entre_pesajes": {
+      "type": "number",
+      "description": "D\u00edas entre pesaje anterior y actual"
+    },
+    "ganancia_diaria": {
+      "type": "number",
+      "description": "Ganancia diaria de peso en kg/d\u00eda"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "animal_id",
+    "fecha",
+    "peso"
+  ]
+}

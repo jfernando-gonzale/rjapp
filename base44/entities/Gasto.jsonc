@@ -1,0 +1,77 @@
+{
+  "name": "Gasto",
+  "type": "object",
+  "properties": {
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del gasto"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "compra_animales",
+        "sal",
+        "concentrado",
+        "pasto",
+        "medicina",
+        "vitaminas",
+        "purgas",
+        "vacunas",
+        "veterinario",
+        "transporte",
+        "jornales",
+        "arriendo",
+        "mantenimiento",
+        "insumos",
+        "comisiones",
+        "otros"
+      ],
+      "description": "Categor\u00eda del gasto"
+    },
+    "descripcion": {
+      "type": "string",
+      "description": "Descripci\u00f3n del gasto"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor del gasto"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote (opcional)"
+    },
+    "animal_id": {
+      "type": "string",
+      "description": "ID del animal (opcional)"
+    },
+    "tipo_gasto": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "lote",
+        "finca",
+        "general"
+      ],
+      "default": "general",
+      "description": "Tipo de asignaci\u00f3n del gasto"
+    },
+    "comprobante_url": {
+      "type": "string",
+      "description": "URL del comprobante/foto"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "fecha",
+    "valor",
+    "categoria"
+  ]
+}

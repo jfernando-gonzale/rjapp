@@ -1,0 +1,79 @@
+{
+  "name": "Tratamiento",
+  "type": "object",
+  "properties": {
+    "tipo_registro": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "lote"
+      ],
+      "default": "individual",
+      "description": "Individual o por lote"
+    },
+    "animal_id": {
+      "type": "string",
+      "description": "ID del animal (individual)"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del tratamiento"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "vitamina",
+        "purga",
+        "vacuna",
+        "antibiotico",
+        "bano",
+        "desparasitacion",
+        "medicamento",
+        "otro"
+      ],
+      "description": "Tipo de tratamiento"
+    },
+    "producto": {
+      "type": "string",
+      "description": "Producto aplicado"
+    },
+    "dosis": {
+      "type": "string",
+      "description": "Dosis aplicada"
+    },
+    "responsable": {
+      "type": "string",
+      "description": "Persona responsable"
+    },
+    "costo": {
+      "type": "number",
+      "description": "Costo del tratamiento"
+    },
+    "numero_animales": {
+      "type": "number",
+      "description": "N\u00famero de animales tratados (lote)"
+    },
+    "proxima_fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Pr\u00f3xima fecha recomendada"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "fecha",
+    "tipo"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "name": "Venta",
+  "type": "object",
+  "properties": {
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de venta"
+    },
+    "animal_id": {
+      "type": "string",
+      "description": "ID del animal vendido"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote"
+    },
+    "peso_venta": {
+      "type": "number",
+      "description": "Peso al vender en kg"
+    },
+    "precio_kilo": {
+      "type": "number",
+      "description": "Precio por kilo"
+    },
+    "precio_total": {
+      "type": "number",
+      "description": "Precio total de venta"
+    },
+    "comprador": {
+      "type": "string",
+      "description": "Nombre del comprador"
+    },
+    "costo_transporte": {
+      "type": "number",
+      "description": "Costo de transporte"
+    },
+    "comision": {
+      "type": "number",
+      "description": "Comisi\u00f3n"
+    },
+    "otros_descuentos": {
+      "type": "number",
+      "description": "Otros descuentos o gastos de venta"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "fecha",
+    "animal_id"
+  ]
+}

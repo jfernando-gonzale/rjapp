@@ -1,0 +1,118 @@
+{
+  "name": "Animal",
+  "type": "object",
+  "properties": {
+    "numero": {
+      "type": "string",
+      "description": "N\u00famero/chapeta/identificaci\u00f3n visual"
+    },
+    "nombre": {
+      "type": "string",
+      "description": "Nombre opcional"
+    },
+    "marca": {
+      "type": "string",
+      "description": "Marca del ganado"
+    },
+    "sexo": {
+      "type": "string",
+      "enum": [
+        "macho",
+        "hembra"
+      ],
+      "description": "Sexo del animal"
+    },
+    "raza": {
+      "type": "string",
+      "description": "Raza o cruce"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color del animal"
+    },
+    "fecha_nacimiento": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de nacimiento aproximada"
+    },
+    "edad_aproximada": {
+      "type": "string",
+      "description": "Edad aproximada"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "activo",
+        "vendido",
+        "muerto",
+        "descartado",
+        "trasladado"
+      ],
+      "default": "activo",
+      "description": "Estado del animal"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    },
+    "fecha_compra": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de compra"
+    },
+    "peso_compra": {
+      "type": "number",
+      "description": "Peso al comprar en kg"
+    },
+    "precio_compra": {
+      "type": "number",
+      "description": "Precio de compra total"
+    },
+    "precio_kilo_compra": {
+      "type": "number",
+      "description": "Precio por kilo al comprar"
+    },
+    "vendedor": {
+      "type": "string",
+      "description": "Vendedor"
+    },
+    "lugar_compra": {
+      "type": "string",
+      "description": "Lugar de compra"
+    },
+    "costo_transporte_inicial": {
+      "type": "number",
+      "description": "Costo de transporte inicial"
+    },
+    "otros_costos_iniciales": {
+      "type": "number",
+      "description": "Otros costos iniciales"
+    },
+    "ultimo_peso": {
+      "type": "number",
+      "description": "\u00daltimo peso registrado"
+    },
+    "fecha_ultimo_pesaje": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del \u00faltimo pesaje"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "Foto del animal"
+    }
+  },
+  "required": [
+    "numero",
+    "finca_id",
+    "estado"
+  ]
+}

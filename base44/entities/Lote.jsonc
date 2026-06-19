@@ -1,0 +1,49 @@
+{
+  "name": "Lote",
+  "type": "object",
+  "properties": {
+    "nombre": {
+      "type": "string",
+      "description": "Nombre del lote"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "levante",
+        "ceba",
+        "cria",
+        "reproduccion",
+        "descarte",
+        "otro"
+      ],
+      "default": "ceba",
+      "description": "Tipo de lote"
+    },
+    "fecha_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de inicio del lote"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "activo",
+        "cerrado"
+      ],
+      "default": "activo",
+      "description": "Estado del lote"
+    }
+  },
+  "required": [
+    "nombre",
+    "finca_id"
+  ]
+}

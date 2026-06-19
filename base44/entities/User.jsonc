@@ -1,0 +1,50 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "trabajador",
+        "lectura"
+      ],
+      "default": "admin",
+      "description": "Rol del usuario: Administrador, Trabajador de campo, Solo lectura"
+    },
+    "business_name": {
+      "type": "string",
+      "description": "Nombre del negocio ganadero"
+    },
+    "currency": {
+      "type": "string",
+      "default": "COP",
+      "description": "Moneda"
+    },
+    "weight_unit": {
+      "type": "string",
+      "default": "kg",
+      "description": "Unidad de peso"
+    },
+    "weighing_frequency_days": {
+      "type": "number",
+      "default": 30,
+      "description": "Frecuencia recomendada de pesaje en d\u00edas"
+    },
+    "good_gain_threshold": {
+      "type": "number",
+      "default": 0.8,
+      "description": "Umbral de buena ganancia diaria kg/d\u00eda"
+    },
+    "medium_gain_threshold": {
+      "type": "number",
+      "default": 0.4,
+      "description": "Umbral de ganancia media kg/d\u00eda"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL del logo del negocio"
+    }
+  },
+  "required": []
+}
