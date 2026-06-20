@@ -25,6 +25,17 @@ import Ventas from '@/pages/Ventas';
 import Tratamientos from '@/pages/Tratamientos';
 import Reportes from '@/pages/Reportes';
 import Configuracion from '@/pages/Configuracion';
+import CaballosDashboard from '@/pages/CaballosDashboard';
+import YeguasList from '@/pages/YeguasList';
+import YeguaForm from '@/pages/YeguaForm';
+import YeguaDetail from '@/pages/YeguaDetail';
+import InseminacionForm from '@/pages/InseminacionForm';
+import ConfirmacionPreñezForm from '@/pages/ConfirmacionPreñezForm';
+import RepeticionCeloForm from '@/pages/RepeticionCeloForm';
+import PartoForm from '@/pages/PartoForm';
+import DesteteForm from '@/pages/DesteteForm';
+import CriasList from '@/pages/CriasList';
+import CalendarioReproductivo from '@/pages/CalendarioReproductivo';
 import { Navigate } from 'react-router-dom';
 
 const AuthenticatedApp = () => {
@@ -76,6 +87,19 @@ const AuthenticatedApp = () => {
           <Route path="/tratamientos/nuevo" element={<Tratamientos />} />
           <Route path="/reportes" element={<Reportes />} />
           <Route path="/configuracion" element={<Configuracion />} />
+          {/* Caballos / Reproducción de Yeguas */}
+          <Route path="/caballos" element={<CaballosDashboard />} />
+          <Route path="/caballos/yeguas" element={<YeguasList />} />
+          <Route path="/caballos/yeguas/nueva" element={<YeguaForm />} />
+          <Route path="/caballos/yeguas/:id" element={<YeguaDetail />} />
+          <Route path="/caballos/yeguas/:id/editar" element={<YeguaForm />} />
+          <Route path="/caballos/inseminacion/nueva" element={<InseminacionForm />} />
+          <Route path="/caballos/preñez/nueva" element={<ConfirmacionPreñezForm />} />
+          <Route path="/caballos/celo/nueva" element={<RepeticionCeloForm />} />
+          <Route path="/caballos/parto/nuevo" element={<PartoForm />} />
+          <Route path="/caballos/destete/nuevo" element={<DesteteForm />} />
+          <Route path="/caballos/crias" element={<CriasList />} />
+          <Route path="/caballos/calendario" element={<CalendarioReproductivo />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

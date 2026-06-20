@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { 
   Bug as Cow, Weight, Syringe, DollarSign, ShoppingCart, 
   BarChart3, Fence, Layers, Calendar, TrendingUp, 
-  AlertTriangle, Clock
+  AlertTriangle, Clock, Heart
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import StatCard from "@/components/shared/StatCard";
@@ -19,6 +19,7 @@ const quickActions = [
   { path: "/ventas", label: "Ventas", icon: ShoppingCart, color: "bg-rose-500" },
   { path: "/reportes", label: "Reportes", icon: BarChart3, color: "bg-indigo-500" },
   { path: "/fincas", label: "Fincas y Lotes", icon: Fence, color: "bg-teal-500" },
+  { path: "/caballos", label: "Caballos", icon: Heart, color: "bg-pink-500" },
   { path: "/configuracion", label: "Configuración", icon: Calendar, color: "bg-gray-500" },
 ];
 

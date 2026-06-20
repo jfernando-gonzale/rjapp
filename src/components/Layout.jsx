@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { 
   Home, Fence, Layers, Bug as Cow, Weight, Syringe, 
   DollarSign, ShoppingCart, BarChart3, Settings, Menu, X,
-  ChevronRight, LogOut
+  ChevronRight, LogOut, Heart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -18,6 +18,7 @@ const navItems = [
   { path: "/ventas", label: "Ventas", icon: ShoppingCart },
   { path: "/fincas", label: "Fincas", icon: Fence },
   { path: "/lotes", label: "Lotes", icon: Layers },
+  { path: "/caballos", label: "Caballos", icon: Heart },
   { path: "/reportes", label: "Reportes", icon: BarChart3 },
   { path: "/configuracion", label: "Configuración", icon: Settings },
 ];

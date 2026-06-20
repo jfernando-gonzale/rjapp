@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import {
   Bug as Horse, Heart, Baby, Calendar, AlertTriangle, TrendingUp,
-  Eye, Activity, GitBranch
+  Eye, Activity, GitBranch, Baby as BabyIcon
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -106,7 +106,7 @@ export default function CaballosDashboard() {
       />
 
       {/* Acciones rápidas */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Link to="/caballos/yeguas">
           <Card className="p-4 hover:shadow-lg transition-all cursor-pointer group active:scale-[0.98]">
             <div className="flex flex-col items-center gap-2 text-center">
@@ -134,6 +134,16 @@ export default function CaballosDashboard() {
                 <Baby className="w-6 h-6 text-white" />
               </div>
               <span className="text-sm font-medium">Registrar Parto</span>
+            </div>
+          </Card>
+        </Link>
+        <Link to="/caballos/crias">
+          <Card className="p-4 hover:shadow-lg transition-all cursor-pointer group active:scale-[0.98]">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="w-12 h-12 rounded-xl bg-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BabyIcon className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-sm font-medium">Crías</span>
             </div>
           </Card>
         </Link>
