@@ -1,0 +1,84 @@
+{
+  "name": "Yegua",
+  "type": "object",
+  "properties": {
+    "nombre": {
+      "type": "string",
+      "description": "Nombre o n\u00famero de la yegua"
+    },
+    "numero": {
+      "type": "string",
+      "description": "Identificaci\u00f3n de la yegua"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote o potrero (opcional)"
+    },
+    "raza": {
+      "type": "string",
+      "description": "Raza de la yegua"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color de la yegua"
+    },
+    "edad_aproximada": {
+      "type": "string",
+      "description": "Edad aproximada"
+    },
+    "estado_reproductivo": {
+      "type": "string",
+      "enum": [
+        "vacia",
+        "inseminada",
+        "pre\u00f1ada",
+        "parida",
+        "descanso",
+        "retirada"
+      ],
+      "default": "vacia",
+      "description": "Estado reproductivo actual"
+    },
+    "fecha_ultima_inseminacion": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de la \u00faltima inseminaci\u00f3n"
+    },
+    "fecha_probable_parto": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha probable de parto"
+    },
+    "fecha_ultimo_parto": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del \u00faltimo parto"
+    },
+    "fecha_confirmacion_pre\u00f1ez": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de confirmaci\u00f3n de pre\u00f1ez"
+    },
+    "repeticiones_celo": {
+      "type": "number",
+      "default": 0,
+      "description": "N\u00famero de veces que repiti\u00f3 celo en el ciclo actual"
+    },
+    "cria_actual_id": {
+      "type": "string",
+      "description": "ID de la cr\u00eda actual"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones generales"
+    }
+  },
+  "required": [
+    "nombre",
+    "estado_reproductivo"
+  ]
+}

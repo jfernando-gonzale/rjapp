@@ -1,0 +1,56 @@
+{
+  "name": "Inseminacion",
+  "type": "object",
+  "properties": {
+    "yegua_id": {
+      "type": "string",
+      "description": "ID de la yegua"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de inseminaci\u00f3n o monta"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "inseminacion_artificial",
+        "monta_natural"
+      ],
+      "default": "monta_natural",
+      "description": "Tipo de inseminaci\u00f3n"
+    },
+    "reproductor": {
+      "type": "string",
+      "description": "Reproductor / caballo / semen usado"
+    },
+    "responsable": {
+      "type": "string",
+      "description": "Persona responsable"
+    },
+    "resultado": {
+      "type": "string",
+      "enum": [
+        "pendiente",
+        "pre\u00f1ada",
+        "repitio_celo",
+        "fallida",
+        "no_confirmado"
+      ],
+      "default": "pendiente",
+      "description": "Resultado de la inseminaci\u00f3n"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "yegua_id",
+    "fecha"
+  ]
+}

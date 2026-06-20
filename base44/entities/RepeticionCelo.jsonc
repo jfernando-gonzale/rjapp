@@ -1,0 +1,47 @@
+{
+  "name": "RepeticionCelo",
+  "type": "object",
+  "properties": {
+    "yegua_id": {
+      "type": "string",
+      "description": "ID de la yegua"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha en que repiti\u00f3 celo"
+    },
+    "inseminacion_id": {
+      "type": "string",
+      "description": "ID de la inseminaci\u00f3n anterior relacionada"
+    },
+    "fecha_inseminacion_anterior": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de la inseminaci\u00f3n anterior"
+    },
+    "nueva_accion": {
+      "type": "string",
+      "enum": [
+        "reinseminar",
+        "observacion",
+        "veterinario",
+        "nada"
+      ],
+      "default": "observacion",
+      "description": "Nueva acci\u00f3n a tomar"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "yegua_id",
+    "fecha"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "ConfirmacionPre\u00f1ez",
+  "type": "object",
+  "properties": {
+    "yegua_id": {
+      "type": "string",
+      "description": "ID de la yegua"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de confirmaci\u00f3n"
+    },
+    "metodo": {
+      "type": "string",
+      "enum": [
+        "ecografia",
+        "palpacion",
+        "observacion",
+        "otro"
+      ],
+      "default": "palpacion",
+      "description": "M\u00e9todo de confirmaci\u00f3n"
+    },
+    "inseminacion_id": {
+      "type": "string",
+      "description": "ID de la inseminaci\u00f3n relacionada"
+    },
+    "fecha_inseminacion": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de la inseminaci\u00f3n relacionada"
+    },
+    "fecha_probable_parto": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha probable de parto calculada"
+    },
+    "veterinario": {
+      "type": "string",
+      "description": "Veterinario o responsable"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "yegua_id",
+    "fecha",
+    "fecha_inseminacion"
+  ]
+}

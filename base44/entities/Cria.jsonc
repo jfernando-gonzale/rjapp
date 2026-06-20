@@ -1,0 +1,70 @@
+{
+  "name": "Cria",
+  "type": "object",
+  "properties": {
+    "nombre": {
+      "type": "string",
+      "description": "Nombre o n\u00famero de la cr\u00eda"
+    },
+    "madre_id": {
+      "type": "string",
+      "description": "ID de la yegua madre"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "fecha_nacimiento": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de nacimiento"
+    },
+    "sexo": {
+      "type": "string",
+      "enum": [
+        "macho",
+        "hembra",
+        "no_registrado"
+      ],
+      "default": "no_registrado",
+      "description": "Sexo de la cr\u00eda"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color de la cr\u00eda"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "lactante",
+        "destetada",
+        "vendida",
+        "muerta",
+        "activa"
+      ],
+      "default": "lactante",
+      "description": "Estado de la cr\u00eda"
+    },
+    "fecha_destete": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de destete"
+    },
+    "edad_destete_dias": {
+      "type": "number",
+      "description": "Edad al destete en d\u00edas"
+    },
+    "parto_id": {
+      "type": "string",
+      "description": "ID del parto relacionado"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "madre_id",
+    "fecha_nacimiento"
+  ]
+}

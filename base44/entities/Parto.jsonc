@@ -1,0 +1,61 @@
+{
+  "name": "Parto",
+  "type": "object",
+  "properties": {
+    "yegua_id": {
+      "type": "string",
+      "description": "ID de la yegua"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del parto"
+    },
+    "resultado": {
+      "type": "string",
+      "enum": [
+        "cria_viva",
+        "cria_muerta",
+        "aborto",
+        "complicacion"
+      ],
+      "default": "cria_viva",
+      "description": "Resultado del parto"
+    },
+    "sexo_cria": {
+      "type": "string",
+      "enum": [
+        "macho",
+        "hembra",
+        "no_registrado"
+      ],
+      "default": "no_registrado",
+      "description": "Sexo de la cr\u00eda"
+    },
+    "nombre_cria": {
+      "type": "string",
+      "description": "Nombre o n\u00famero de la cr\u00eda"
+    },
+    "color_cria": {
+      "type": "string",
+      "description": "Color de la cr\u00eda"
+    },
+    "cria_id": {
+      "type": "string",
+      "description": "ID de la cr\u00eda creada"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones del parto"
+    }
+  },
+  "required": [
+    "yegua_id",
+    "fecha",
+    "resultado"
+  ]
+}
