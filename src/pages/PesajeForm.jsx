@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -20,6 +20,7 @@ export default function PesajeForm() {
   const preLote = urlParams.get("lote");
 
   const [mode, setMode] = useState(preLote ? "lote" : "individual");
+  const [selectedEspecie, setSelectedEspecie] = useState("all");
   const [selectedFinca, setSelectedFinca] = useState("");
   const [selectedLote, setSelectedLote] = useState(preLote || "");
   const [selectedAnimal, setSelectedAnimal] = useState(preAnimal || "");
@@ -34,17 +35,18 @@ export default function PesajeForm() {
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
 
   const filteredLotes = selectedFinca ? lotes.filter(l => l.finca_id === selectedFinca) : lotes;
-  const filteredAnimals = animals.filter(a => {
+
+  const filteredAnimals = useMemo(() => animals.filter(a => {
     if (a.estado !== "activo") return false;
+    if (selectedEspecie !== "all" && (a.especie || "bovino") !== selectedEspecie) return false;
     if (mode === "lote" && selectedLote) return a.lote_id === selectedLote;
     if (selectedFinca) return a.finca_id === selectedFinca;
     return true;
-  });
+  }), [animals, selectedEspecie, mode, selectedLote, selectedFinca]);
 
   const createPesajeMutation = useMutation({
     mutationFn: async (pesajeData) => {
       const pesaje = await base44.entities.Pesaje.create(pesajeData);
-      // Update animal's last weight
       await base44.entities.Animal.update(pesajeData.animal_id, {
         ultimo_peso: pesajeData.peso,
         fecha_ultimo_pesaje: pesajeData.fecha,
@@ -127,17 +129,27 @@ export default function PesajeForm() {
 
       <h1 className="text-2xl font-heading font-bold mb-2">Nuevo Pesaje</h1>
 
-      {/* Mode selector */}
+      {/* Modo */}
       <div className="flex gap-2 mb-4">
-        <Button variant={mode === "individual" ? "default" : "outline"} onClick={() => setMode("individual")}>
-          Individual
-        </Button>
-        <Button variant={mode === "lote" ? "default" : "outline"} onClick={() => setMode("lote")}>
-          Por lote
-        </Button>
+        <Button variant={mode === "individual" ? "default" : "outline"} onClick={() => setMode("individual")}>Individual</Button>
+        <Button variant={mode === "lote" ? "default" : "outline"} onClick={() => setMode("lote")}>Por lote</Button>
       </div>
 
-      {/* Shared fields */}
+      {/* Filtro especie */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {[
+          { key: "all", label: "Todas las especies" },
+          { key: "bovino", label: "🐄 Bovinos" },
+          { key: "ovino", label: "🐑 Ovinos" },
+          { key: "equino", label: "🐴 Equinos" },
+        ].map(e => (
+          <button key={e.key} onClick={() => { setSelectedEspecie(e.key); setSelectedAnimal(""); }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              selectedEspecie === e.key ? "bg-amber-500 text-black border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+            }`}>{e.label}</button>
+        ))}
+      </div>
+
       <Card className="p-4 mb-4 space-y-3">
         <div>
           <Label>Fecha *</Label>
@@ -171,7 +183,7 @@ export default function PesajeForm() {
         <form onSubmit={handleIndividualSubmit}>
           <Card className="p-4 space-y-3 mb-4">
             <div>
-              <Label>Animal *</Label>
+              <Label>Animal * {selectedEspecie !== "all" && <span className="text-xs text-amber-600 ml-1">({filteredAnimals.length} disponibles)</span>}</Label>
               <Select value={selectedAnimal} onValueChange={setSelectedAnimal} required>
                 <SelectTrigger><SelectValue placeholder="Buscar animal..." /></SelectTrigger>
                 <SelectContent>
@@ -192,7 +204,7 @@ export default function PesajeForm() {
               <Textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             </div>
           </Card>
-          <Button type="submit" className="w-full h-12 text-base gap-2" disabled={createPesajeMutation.isPending}>
+          <Button type="submit" className="w-full h-12 text-base gap-2" disabled={createPesajeMutation.isPending || !selectedAnimal}>
             <Weight className="w-5 h-5" /> Guardar pesaje
           </Button>
         </form>
@@ -216,11 +228,7 @@ export default function PesajeForm() {
                           <td className="py-2 font-medium">#{a.numero}</td>
                           <td className="py-2 text-right text-muted-foreground">{a.ultimo_peso ? formatWeight(a.ultimo_peso) : "—"}</td>
                           <td className="py-2">
-                            <Input
-                              type="number"
-                              step="0.1"
-                              placeholder="kg"
-                              className="text-right h-9"
+                            <Input type="number" step="0.1" placeholder="kg" className="text-right h-9"
                               value={batchWeights[a.id] || ""}
                               onChange={(e) => setBatchWeights({ ...batchWeights, [a.id]: e.target.value })}
                             />
@@ -231,12 +239,12 @@ export default function PesajeForm() {
                   </table>
                 </div>
               </Card>
-              <Button 
-                onClick={handleBatchSubmit} 
-                className="w-full h-12 text-base gap-2" 
+              <Button
+                onClick={handleBatchSubmit}
+                className="w-full h-12 text-base gap-2"
                 disabled={createPesajeMutation.isPending || Object.values(batchWeights).filter(w => w).length === 0}
               >
-                <Weight className="w-5 h-5" /> 
+                <Weight className="w-5 h-5" />
                 Guardar {Object.values(batchWeights).filter(w => w && parseFloat(w) > 0).length} pesajes
               </Button>
             </>

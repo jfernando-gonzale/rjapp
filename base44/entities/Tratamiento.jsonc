@@ -2,6 +2,16 @@
   "name": "Tratamiento",
   "type": "object",
   "properties": {
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino"
+      ],
+      "default": "bovino",
+      "description": "Especie del animal o lote tratado"
+    },
     "tipo_registro": {
       "type": "string",
       "enum": [

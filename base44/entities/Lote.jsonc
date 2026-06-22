@@ -10,6 +10,17 @@
       "type": "string",
       "description": "ID de la finca"
     },
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino",
+        "mixto"
+      ],
+      "default": "bovino",
+      "description": "Especie principal del lote"
+    },
     "tipo": {
       "type": "string",
       "enum": [

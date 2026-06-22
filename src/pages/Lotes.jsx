@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
@@ -14,9 +14,20 @@ import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { formatCurrency, formatWeight, TIPO_LOTE } from "@/lib/helpers";
 
+const ESPECIE_LOTE = { bovino: "🐄 Bovino", ovino: "🐑 Ovino", equino: "🐴 Equino", mixto: "🌿 Mixto" };
+const ESPECIE_COLORS = {
+  bovino: "bg-amber-100 text-amber-800",
+  ovino: "bg-green-100 text-green-800",
+  equino: "bg-blue-100 text-blue-800",
+  mixto: "bg-gray-100 text-gray-600",
+};
+
 export default function Lotes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [filterEspecie, setFilterEspecie] = useState("all");
+  const [filterFinca, setFilterFinca] = useState("all");
+  const [filterEstado, setFilterEstado] = useState("all");
   const queryClient = useQueryClient();
 
   const { data: lotes = [], isLoading } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
@@ -43,6 +54,13 @@ export default function Lotes() {
     else createMutation.mutate(data);
   };
 
+  const filtered = useMemo(() => lotes.filter(l => {
+    if (filterEspecie !== "all" && l.especie !== filterEspecie) return false;
+    if (filterFinca !== "all" && l.finca_id !== filterFinca) return false;
+    if (filterEstado !== "all" && l.estado !== filterEstado) return false;
+    return true;
+  }), [lotes, filterEspecie, filterFinca, filterEstado]);
+
   const getLoteStats = (loteId) => {
     const loteAnimals = animals.filter(a => a.lote_id === loteId && a.estado === "activo");
     const withWeight = loteAnimals.filter(a => a.ultimo_peso);
@@ -56,13 +74,48 @@ export default function Lotes() {
 
   return (
     <div>
-      <PageHeader title="Lotes" subtitle="Grupos de animales por finca" actionLabel="Nuevo Lote" onAction={() => { setEditing(null); setDialogOpen(true); }} />
+      <PageHeader title="Lotes / Potreros" subtitle={`${filtered.length} lotes`} actionLabel="Nuevo Lote" onAction={() => { setEditing(null); setDialogOpen(true); }} />
 
-      {lotes.length === 0 && !isLoading ? (
+      {/* Filtros especie */}
+      <div className="flex gap-2 mb-3 flex-wrap">
+        {[
+          { key: "all", label: "Todas las especies" },
+          { key: "bovino", label: "🐄 Bovinos" },
+          { key: "ovino", label: "🐑 Ovinos" },
+          { key: "equino", label: "🐴 Equinos" },
+          { key: "mixto", label: "🌿 Mixto" },
+        ].map(e => (
+          <button key={e.key} onClick={() => setFilterEspecie(e.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              filterEspecie === e.key ? "bg-amber-500 text-black border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+            }`}>{e.label}</button>
+        ))}
+      </div>
+
+      {/* Filtros adicionales */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <Select value={filterFinca} onValueChange={setFilterFinca}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Finca" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las fincas</SelectItem>
+            {fincas.map(f => <SelectItem key={f.id} value={f.id}>{f.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterEstado} onValueChange={setFilterEstado}>
+          <SelectTrigger className="w-36"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="activo">Activo</SelectItem>
+            <SelectItem value="cerrado">Cerrado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filtered.length === 0 && !isLoading ? (
         <EmptyState icon={Layers} title="Sin lotes" description="Crea lotes para agrupar tus animales" actionLabel="Nuevo Lote" onAction={() => setDialogOpen(true)} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {lotes.map((lote) => {
+          {filtered.map((lote) => {
             const stats = getLoteStats(lote.id);
             return (
               <Card key={lote.id} className="p-4 hover:shadow-md transition-shadow">
@@ -70,8 +123,13 @@ export default function Lotes() {
                   <div>
                     <h3 className="font-heading font-bold">{lote.nombre}</h3>
                     <p className="text-xs text-muted-foreground">{getFincaName(lote.finca_id)}</p>
+                    {lote.especie && (
+                      <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-semibold mt-1 ${ESPECIE_COLORS[lote.especie] || "bg-gray-100 text-gray-600"}`}>
+                        {ESPECIE_LOTE[lote.especie] || lote.especie}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <StatusBadge status={lote.tipo} label={TIPO_LOTE[lote.tipo] || lote.tipo} color="blue" />
                     <StatusBadge status={lote.estado} />
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(lote); setDialogOpen(true); }}>
@@ -115,6 +173,18 @@ export default function Lotes() {
                 <SelectTrigger><SelectValue placeholder="Seleccionar finca" /></SelectTrigger>
                 <SelectContent>
                   {fincas.map(f => <SelectItem key={f.id} value={f.id}>{f.nombre}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Especie principal</Label>
+              <Select name="especie" defaultValue={editing?.especie || "bovino"}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bovino">🐄 Bovino</SelectItem>
+                  <SelectItem value="ovino">🐑 Ovino</SelectItem>
+                  <SelectItem value="equino">🐴 Equino</SelectItem>
+                  <SelectItem value="mixto">🌿 Mixto / General</SelectItem>
                 </SelectContent>
               </Select>
             </div>

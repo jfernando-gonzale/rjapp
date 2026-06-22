@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,13 @@ import { formatCurrency, TIPO_TRATAMIENTO } from "@/lib/helpers";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+const ESPECIE_COLORS = {
+  bovino: "bg-amber-100 text-amber-800",
+  ovino: "bg-green-100 text-green-800",
+  equino: "bg-blue-100 text-blue-800",
+};
+const ESPECIE_LABELS = { bovino: "🐄 Bovino", ovino: "🐑 Ovino", equino: "🐴 Equino" };
+
 export default function Tratamientos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -26,6 +33,8 @@ export default function Tratamientos() {
 
   const [dialogOpen, setDialogOpen] = useState(isNew);
   const [tipoRegistro, setTipoRegistro] = useState("individual");
+  const [formEspecie, setFormEspecie] = useState("bovino");
+  const [filterEspecie, setFilterEspecie] = useState("all");
 
   const { data: tratamientos = [], isLoading } = useQuery({ queryKey: ["tratamientos"], queryFn: () => base44.entities.Tratamiento.list("-fecha", 200) });
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
@@ -40,7 +49,7 @@ export default function Tratamientos() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const data = { tipo_registro: tipoRegistro };
+    const data = { tipo_registro: tipoRegistro, especie: formEspecie };
     for (const [key, value] of fd.entries()) {
       if (value !== "") {
         if (["costo", "numero_animales"].includes(key)) data[key] = parseFloat(value);
@@ -53,17 +62,47 @@ export default function Tratamientos() {
   const animalMap = {};
   animals.forEach(a => { animalMap[a.id] = a; });
 
-  // Upcoming treatments
+  // Animales y lotes filtrados por especie del formulario
+  const animalesForm = animals.filter(a => a.estado === "activo" && (a.especie || "bovino") === formEspecie);
+  const lotesForm = lotes.filter(l => !l.especie || l.especie === formEspecie || l.especie === "mixto");
+
   const today = new Date().toISOString().split("T")[0];
   const upcoming = tratamientos.filter(t => t.proxima_fecha && t.proxima_fecha >= today);
 
+  // Filtrar lista
+  const filtered = useMemo(() => tratamientos.filter(t => {
+    if (filterEspecie !== "all") {
+      // Filtrar por especie del tratamiento, o especie del animal asociado
+      const especieTrat = t.especie;
+      const animalEspecie = animalMap[t.animal_id]?.especie || "bovino";
+      const especie = especieTrat || animalEspecie;
+      if (especie !== filterEspecie) return false;
+    }
+    return true;
+  }), [tratamientos, filterEspecie, animalMap]);
+
   return (
     <div>
-      <PageHeader title="Tratamientos" subtitle={`${tratamientos.length} registros`}>
+      <PageHeader title="Tratamientos" subtitle={`${filtered.length} registros`}>
         <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="w-4 h-4" /> Nuevo</Button>
       </PageHeader>
 
-      {/* Upcoming alerts */}
+      {/* Filtro especie */}
+      <div className="flex gap-2 mb-3 flex-wrap">
+        {[
+          { key: "all", label: "Todas las especies" },
+          { key: "bovino", label: "🐄 Bovinos" },
+          { key: "ovino", label: "🐑 Ovinos" },
+          { key: "equino", label: "🐴 Equinos" },
+        ].map(e => (
+          <button key={e.key} onClick={() => setFilterEspecie(e.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              filterEspecie === e.key ? "bg-amber-500 text-black border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+            }`}>{e.label}</button>
+        ))}
+      </div>
+
+      {/* Próximos tratamientos */}
       {upcoming.length > 0 && (
         <div className="mb-4 space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">Próximos tratamientos</h3>
@@ -83,12 +122,13 @@ export default function Tratamientos() {
         </div>
       )}
 
-      {tratamientos.length === 0 && !isLoading ? (
+      {filtered.length === 0 && !isLoading ? (
         <EmptyState icon={Syringe} title="Sin tratamientos" description="Registra el primer tratamiento" actionLabel="Nuevo" onAction={() => setDialogOpen(true)} />
       ) : (
         <div className="space-y-2">
-          {tratamientos.map(t => {
+          {filtered.map(t => {
             const animal = animalMap[t.animal_id];
+            const especie = t.especie || animal?.especie || "bovino";
             return (
               <Card key={t.id} className="p-4">
                 <div className="flex items-center justify-between">
@@ -97,12 +137,15 @@ export default function Tratamientos() {
                       <Syringe className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{TIPO_TRATAMIENTO[t.tipo] || t.tipo}</p>
                         {t.producto && <span className="text-sm text-muted-foreground">({t.producto})</span>}
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${ESPECIE_COLORS[especie] || "bg-gray-100 text-gray-600"}`}>
+                          {ESPECIE_LABELS[especie] || especie}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(t.fecha), "dd MMM yyyy", { locale: es })}
+                        {t.fecha ? format(new Date(t.fecha), "dd MMM yyyy", { locale: es }) : ""}
                         {t.tipo_registro === "individual" && animal ? ` • #${animal.numero}` : ""}
                         {t.tipo_registro === "lote" && t.numero_animales ? ` • ${t.numero_animales} animales` : ""}
                       </p>
@@ -119,7 +162,25 @@ export default function Tratamientos() {
       <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open && isNew) navigate("/tratamientos"); }}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-heading">Nuevo Tratamiento</DialogTitle></DialogHeader>
-          
+
+          {/* Seleccionar especie primero */}
+          <div>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">Especie</Label>
+            <div className="flex gap-2 mb-2">
+              {[
+                { key: "bovino", label: "🐄 Bovino" },
+                { key: "ovino", label: "🐑 Ovino" },
+                { key: "equino", label: "🐴 Equino" },
+              ].map(e => (
+                <button key={e.key} type="button" onClick={() => setFormEspecie(e.key)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    formEspecie === e.key ? "bg-amber-500 text-black border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+                  }`}>{e.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Individual / Lote */}
           <div className="flex gap-2 mb-2">
             <Button size="sm" variant={tipoRegistro === "individual" ? "default" : "outline"} onClick={() => setTipoRegistro("individual")}>Individual</Button>
             <Button size="sm" variant={tipoRegistro === "lote" ? "default" : "outline"} onClick={() => setTipoRegistro("lote")}>Por lote</Button>
@@ -139,14 +200,15 @@ export default function Tratamientos() {
                 </SelectContent>
               </Select>
             </div>
+
             {tipoRegistro === "individual" ? (
               <div>
-                <Label>Animal *</Label>
+                <Label>Animal * <span className="text-xs text-amber-600">({animalesForm.length} {ESPECIE_LABELS[formEspecie]})</span></Label>
                 <Select name="animal_id" defaultValue={preAnimal || ""} required>
                   <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
-                    {animals.filter(a => a.estado === "activo").map(a => (
-                      <SelectItem key={a.id} value={a.id}>#{a.numero}</SelectItem>
+                    {animalesForm.map(a => (
+                      <SelectItem key={a.id} value={a.id}>#{a.numero} {a.nombre ? `(${a.nombre})` : ""}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -163,11 +225,11 @@ export default function Tratamientos() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Lote</Label>
+                  <Label>Lote <span className="text-xs text-amber-600">(filtrado por especie)</span></Label>
                   <Select name="lote_id">
                     <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                     <SelectContent>
-                      {lotes.map(l => <SelectItem key={l.id} value={l.id}>{l.nombre}</SelectItem>)}
+                      {lotesForm.map(l => <SelectItem key={l.id} value={l.id}>{l.nombre}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -177,6 +239,7 @@ export default function Tratamientos() {
                 </div>
               </>
             )}
+
             <div>
               <Label>Producto</Label>
               <Input name="producto" placeholder="Nombre del producto" />
