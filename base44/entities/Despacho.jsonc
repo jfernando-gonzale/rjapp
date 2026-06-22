@@ -1,0 +1,68 @@
+{
+  "name": "Despacho",
+  "type": "object",
+  "properties": {
+    "reproductor": {
+      "type": "string",
+      "description": "Nombre del reproductor"
+    },
+    "fecha_despacho": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de despacho"
+    },
+    "cliente_id": {
+      "type": "string",
+      "description": "ID del cliente"
+    },
+    "ciudad_destino": {
+      "type": "string",
+      "description": "Ciudad destino"
+    },
+    "departamento_destino": {
+      "type": "string",
+      "description": "Departamento destino"
+    },
+    "transportadora": {
+      "type": "string",
+      "description": "Transportadora"
+    },
+    "numero_guia": {
+      "type": "string",
+      "description": "N\u00famero de gu\u00eda de env\u00edo"
+    },
+    "numero_dosis": {
+      "type": "number",
+      "description": "N\u00famero de dosis enviadas"
+    },
+    "fecha_estimada_llegada": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha estimada de llegada"
+    },
+    "valor_cobrado": {
+      "type": "number",
+      "description": "Valor cobrado por el env\u00edo"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "programado",
+        "enviado",
+        "entregado",
+        "cancelado",
+        "con_novedad"
+      ],
+      "default": "programado",
+      "description": "Estado del despacho"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "reproductor",
+    "fecha_despacho"
+  ]
+}

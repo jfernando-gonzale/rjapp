@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -12,7 +12,12 @@ import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import Layout from '@/components/Layout';
+
+// Pages
 import Dashboard from '@/pages/Dashboard';
+import Bovinos from '@/pages/Bovinos';
+import Ovinos from '@/pages/Ovinos';
+import Equinos from '@/pages/Equinos';
 import Fincas from '@/pages/Fincas';
 import Lotes from '@/pages/Lotes';
 import Animales from '@/pages/Animales';
@@ -22,9 +27,15 @@ import Pesajes from '@/pages/Pesajes';
 import PesajeForm from '@/pages/PesajeForm';
 import Gastos from '@/pages/Gastos';
 import Ventas from '@/pages/Ventas';
+import Clientes from '@/pages/Clientes';
+import Despachos from '@/pages/Despachos';
 import Tratamientos from '@/pages/Tratamientos';
+import Reproduccion from '@/pages/Reproduccion';
 import Reportes from '@/pages/Reportes';
+import Calendario from '@/pages/Calendario';
 import Configuracion from '@/pages/Configuracion';
+
+// Equinos / Caballos submodule
 import CaballosDashboard from '@/pages/CaballosDashboard';
 import YeguasList from '@/pages/YeguasList';
 import YeguaForm from '@/pages/YeguaForm';
@@ -36,32 +47,28 @@ import PartoForm from '@/pages/PartoForm';
 import DesteteForm from '@/pages/DesteteForm';
 import CriasList from '@/pages/CriasList';
 import CalendarioReproductivo from '@/pages/CalendarioReproductivo';
-import { Navigate } from 'react-router-dom';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-[#111111]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center">
+            <span className="font-black text-black text-lg">RJ</span>
+          </div>
+          <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
       </div>
     );
   }
 
-  // Handle authentication errors
   if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
+    if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
+    if (authError.type === 'auth_required') { navigateToLogin(); return null; }
   }
 
-  // Render the main app
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -71,6 +78,13 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
+
+          {/* Especies */}
+          <Route path="/bovinos" element={<Bovinos />} />
+          <Route path="/ovinos" element={<Ovinos />} />
+          <Route path="/equinos" element={<Equinos />} />
+
+          {/* Operación */}
           <Route path="/fincas" element={<Fincas />} />
           <Route path="/lotes" element={<Lotes />} />
           <Route path="/animales" element={<Animales />} />
@@ -79,15 +93,26 @@ const AuthenticatedApp = () => {
           <Route path="/animales/:id/editar" element={<AnimalForm />} />
           <Route path="/pesajes" element={<Pesajes />} />
           <Route path="/pesajes/nuevo" element={<PesajeForm />} />
+          <Route path="/tratamientos" element={<Tratamientos />} />
+          <Route path="/tratamientos/nuevo" element={<Tratamientos />} />
+          <Route path="/reproduccion" element={<Reproduccion />} />
+
+          {/* Comercial */}
           <Route path="/gastos" element={<Gastos />} />
           <Route path="/gastos/nuevo" element={<Gastos />} />
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/ventas/nueva" element={<Ventas />} />
-          <Route path="/tratamientos" element={<Tratamientos />} />
-          <Route path="/tratamientos/nuevo" element={<Tratamientos />} />
+          <Route path="/clientes" element={<Clientes />} />
+          <Route path="/despachos" element={<Despachos />} />
+
+          {/* Análisis */}
           <Route path="/reportes" element={<Reportes />} />
+          <Route path="/calendario" element={<Calendario />} />
+
+          {/* Sistema */}
           <Route path="/configuracion" element={<Configuracion />} />
-          {/* Caballos / Reproducción de Yeguas */}
+
+          {/* Equinos submodule (caballos) */}
           <Route path="/caballos" element={<CaballosDashboard />} />
           <Route path="/caballos/yeguas" element={<YeguasList />} />
           <Route path="/caballos/yeguas/nueva" element={<YeguaForm />} />
@@ -107,9 +132,7 @@ const AuthenticatedApp = () => {
   );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
@@ -120,7 +143,7 @@ function App() {
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -1,0 +1,33 @@
+{
+  "name": "Cliente",
+  "type": "object",
+  "properties": {
+    "nombre": {
+      "type": "string",
+      "description": "Nombre del cliente"
+    },
+    "telefono": {
+      "type": "string",
+      "description": "Tel\u00e9fono de contacto"
+    },
+    "ciudad": {
+      "type": "string",
+      "description": "Ciudad"
+    },
+    "departamento": {
+      "type": "string",
+      "description": "Departamento"
+    },
+    "finca_criadero": {
+      "type": "string",
+      "description": "Nombre de la finca o criadero"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "nombre"
+  ]
+}
