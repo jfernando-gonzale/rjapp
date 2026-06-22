@@ -1,0 +1,73 @@
+{
+  "name": "Inconformidad",
+  "type": "object",
+  "properties": {
+    "reproductor_id": {
+      "type": "string",
+      "description": "ID del reproductor"
+    },
+    "cliente_id": {
+      "type": "string",
+      "description": "ID del cliente"
+    },
+    "despacho_id": {
+      "type": "string",
+      "description": "ID del despacho relacionado"
+    },
+    "fecha_reporte": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del reporte"
+    },
+    "tipo_novedad": {
+      "type": "string",
+      "enum": [
+        "repeticion",
+        "no_quedo_prenada",
+        "problema_transporte",
+        "dosis_mal_estado",
+        "retraso_entrega",
+        "otra"
+      ],
+      "description": "Tipo de novedad"
+    },
+    "descripcion": {
+      "type": "string",
+      "description": "Descripci\u00f3n del problema"
+    },
+    "accion_tomada": {
+      "type": "string",
+      "enum": [
+        "seguimiento",
+        "reenvio",
+        "descuento",
+        "sin_accion",
+        "otro"
+      ],
+      "default": "seguimiento",
+      "description": "Acci\u00f3n tomada"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "abierta",
+        "cerrada"
+      ],
+      "default": "abierta",
+      "description": "Estado de la inconformidad"
+    },
+    "yegua_cliente": {
+      "type": "string",
+      "description": "Yegua del cliente (opcional)"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "reproductor_id",
+    "fecha_reporte",
+    "tipo_novedad"
+  ]
+}

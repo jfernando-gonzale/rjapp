@@ -1,0 +1,86 @@
+{
+  "name": "Reproductor",
+  "type": "object",
+  "properties": {
+    "nombre": {
+      "type": "string",
+      "description": "Nombre del reproductor / padrillo"
+    },
+    "numero": {
+      "type": "string",
+      "description": "N\u00famero o identificaci\u00f3n"
+    },
+    "raza": {
+      "type": "string",
+      "enum": [
+        "criollo",
+        "apalusa",
+        "cuarto_de_milla",
+        "pinto_americano",
+        "pura_sangre_espanol",
+        "pura_sangre_lusitano",
+        "otra"
+      ],
+      "description": "Raza del reproductor"
+    },
+    "registro": {
+      "type": "string",
+      "description": "N\u00famero de registro"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color"
+    },
+    "fecha_nacimiento": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de nacimiento"
+    },
+    "edad_aproximada": {
+      "type": "string",
+      "description": "Edad aproximada"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "ubicacion": {
+      "type": "string",
+      "description": "Potrero / ubicaci\u00f3n dentro de la finca"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "activo",
+        "inactivo",
+        "retirado",
+        "vendido",
+        "muerto"
+      ],
+      "default": "activo",
+      "description": "Estado del reproductor"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "propio",
+        "externo"
+      ],
+      "default": "propio",
+      "description": "Reproductor propio o externo"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "Foto del reproductor"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones generales"
+    }
+  },
+  "required": [
+    "nombre",
+    "raza",
+    "estado"
+  ]
+}

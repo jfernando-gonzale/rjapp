@@ -35,6 +35,11 @@ import Reportes from '@/pages/Reportes';
 import Calendario from '@/pages/Calendario';
 import Configuracion from '@/pages/Configuracion';
 
+// Reproductores equinos
+import ReproductoresList from '@/pages/ReproductoresList';
+import ReproductorForm from '@/pages/ReproductorForm';
+import ReproductorDetail from '@/pages/ReproductorDetail';
+
 // Equinos / Caballos submodule
 import CaballosDashboard from '@/pages/CaballosDashboard';
 import YeguasList from '@/pages/YeguasList';
@@ -111,6 +116,12 @@ const AuthenticatedApp = () => {
 
           {/* Sistema */}
           <Route path="/configuracion" element={<Configuracion />} />
+
+          {/* Reproductores */}
+          <Route path="/reproductores" element={<ReproductoresList />} />
+          <Route path="/reproductores/nuevo" element={<ReproductorForm />} />
+          <Route path="/reproductores/:id" element={<ReproductorDetail />} />
+          <Route path="/reproductores/:id/editar" element={<ReproductorForm />} />
 
           {/* Equinos submodule (caballos) */}
           <Route path="/caballos" element={<CaballosDashboard />} />

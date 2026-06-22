@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, Truck, MapPin, Package, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Search, Truck, MapPin, Package } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import PageHeader from "@/components/shared/PageHeader";
 import { useToast } from "@/components/ui/use-toast";
+import { Link } from "react-router-dom";
 
 const ESTADOS = ["programado", "enviado", "entregado", "cancelado", "con_novedad"];
 const ESTADO_LABELS = { programado: "Programado", enviado: "Enviado", entregado: "Entregado", cancelado: "Cancelado", con_novedad: "Con novedad" };
@@ -47,6 +48,11 @@ export default function Despachos() {
     queryFn: () => base44.entities.Cliente.list(),
   });
 
+  const { data: reproductores = [] } = useQuery({
+    queryKey: ["reproductores"],
+    queryFn: () => base44.entities.Reproductor.list(),
+  });
+
   const save = useMutation({
     mutationFn: async (data) => {
       const d = { ...data, numero_dosis: Number(data.numero_dosis) || 0, valor_cobrado: Number(data.valor_cobrado) || 0 };
@@ -74,7 +80,11 @@ export default function Despachos() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Despachos" subtitle="Control de envíos de semen fresco" actionLabel="Nuevo Despacho" onAction={openNew} />
+      <PageHeader title="Despachos" subtitle="Control de envíos de semen fresco" actionLabel="Nuevo Despacho" onAction={openNew}>
+        <Link to="/reproductores">
+          <Button variant="outline" className="gap-2">Ver Reproductores</Button>
+        </Link>
+      </PageHeader>
 
       {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -156,7 +166,24 @@ export default function Despachos() {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 space-y-1.5">
                 <Label>Reproductor *</Label>
-                <Input value={form.reproductor} onChange={e => setForm(p => ({ ...p, reproductor: e.target.value }))} placeholder="Nombre del reproductor" />
+                {reproductores.length > 0 ? (
+                  <Select value={form.reproductor_id || ""} onValueChange={v => {
+                    const rep = reproductores.find(r => r.id === v);
+                    setForm(p => ({ ...p, reproductor_id: v, reproductor: rep?.nombre || "" }));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar reproductor..." /></SelectTrigger>
+                    <SelectContent>
+                      {reproductores.filter(r => r.estado === "activo").map(r => (
+                        <SelectItem key={r.id} value={r.id}>{r.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input value={form.reproductor} onChange={e => setForm(p => ({ ...p, reproductor: e.target.value }))} placeholder="Nombre del reproductor" className="flex-1" />
+                    <Link to="/reproductores/nuevo"><Button variant="outline" type="button" size="sm">+ Crear</Button></Link>
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label>Fecha despacho *</Label>
@@ -218,7 +245,7 @@ export default function Despachos() {
               <Button
                 className="bg-amber-500 hover:bg-amber-600 text-black font-semibold"
                 onClick={() => save.mutate(form)}
-                disabled={!form.reproductor || !form.fecha_despacho || save.isPending}
+                disabled={(!form.reproductor && !form.reproductor_id) || !form.fecha_despacho || save.isPending}
               >
                 {save.isPending ? "Guardando..." : "Guardar"}
               </Button>

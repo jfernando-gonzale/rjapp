@@ -1,0 +1,57 @@
+{
+  "name": "Colecta",
+  "type": "object",
+  "properties": {
+    "reproductor_id": {
+      "type": "string",
+      "description": "ID del reproductor"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de colecta"
+    },
+    "hora": {
+      "type": "string",
+      "description": "Hora de colecta"
+    },
+    "responsable": {
+      "type": "string",
+      "description": "Responsable de la colecta"
+    },
+    "numero_dosis": {
+      "type": "number",
+      "description": "N\u00famero de dosis obtenidas"
+    },
+    "calidad": {
+      "type": "string",
+      "enum": [
+        "excelente",
+        "buena",
+        "regular",
+        "mala"
+      ],
+      "description": "Calidad observada"
+    },
+    "volumen": {
+      "type": "string",
+      "description": "Volumen obtenido"
+    },
+    "concentracion": {
+      "type": "string",
+      "description": "Concentraci\u00f3n"
+    },
+    "motilidad": {
+      "type": "string",
+      "description": "Motilidad %"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "reproductor_id",
+    "fecha"
+  ]
+}

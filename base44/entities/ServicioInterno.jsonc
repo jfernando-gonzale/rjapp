@@ -1,0 +1,53 @@
+{
+  "name": "ServicioInterno",
+  "type": "object",
+  "properties": {
+    "reproductor_id": {
+      "type": "string",
+      "description": "ID del reproductor"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del servicio"
+    },
+    "tipo_servicio": {
+      "type": "string",
+      "enum": [
+        "inseminacion_artificial",
+        "monta_natural",
+        "transferencia_embriones"
+      ],
+      "default": "inseminacion_artificial",
+      "description": "Tipo de servicio"
+    },
+    "yegua_id": {
+      "type": "string",
+      "description": "ID de la yegua (opcional)"
+    },
+    "resultado": {
+      "type": "string",
+      "enum": [
+        "pendiente",
+        "prenada",
+        "repitio",
+        "fallida"
+      ],
+      "default": "pendiente",
+      "description": "Resultado"
+    },
+    "responsable": {
+      "type": "string",
+      "description": "Responsable"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "reproductor_id",
+    "fecha",
+    "tipo_servicio"
+  ]
+}

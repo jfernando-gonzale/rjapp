@@ -105,6 +105,7 @@ const navGroups = [
       { path: "/gastos", label: "Gastos", icon: DollarSign },
       { path: "/ventas", label: "Ventas", icon: ShoppingCart },
       { path: "/clientes", label: "Clientes", icon: Users },
+      { path: "/reproductores", label: "Reproductores", icon: HorseIcon },
       { path: "/despachos", label: "Despachos", icon: Truck },
     ]
   },
