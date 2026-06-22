@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-const RAZAS = { criollo: "Criollo", apalusa: "Apalusa", cuarto_de_milla: "Cuarto de Milla", pinto_americano: "Pinto Americano", pura_sangre_espanol: "Pura Sangre Español", pura_sangre_lusitano: "Pura Sangre Lusitano", otra: "Otra" };
+const RAZAS = { criollo: "Criollo", appaloosa: "Appaloosa", cuarto_de_milla: "Cuarto de Milla", pinto_americano: "Pinto Americano", pura_sangre_espanol: "Pura Sangre Español", pura_sangre_lusitano: "Pura Sangre Lusitano", otra: "Otra" };
 const ESTADO_COLORS = { activo: "bg-green-100 text-green-800", inactivo: "bg-gray-100 text-gray-600", retirado: "bg-orange-100 text-orange-800", vendido: "bg-blue-100 text-blue-800", muerto: "bg-red-100 text-red-800" };
 const ESTADO_LABELS = { activo: "Activo", inactivo: "Inactivo", retirado: "Retirado", vendido: "Vendido", muerto: "Muerto" };
 const NOVEDAD_LABELS = { repeticion: "Repetición", no_quedo_prenada: "No quedó preñada", problema_transporte: "Problema de transporte", dosis_mal_estado: "Dosis en mal estado", retraso_entrega: "Retraso en entrega", otra: "Otra" };

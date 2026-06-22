@@ -11,7 +11,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import { formatCurrency } from "@/lib/helpers";
 
 const RAZAS = {
-  criollo: "Criollo", apalusa: "Apalusa", cuarto_de_milla: "Cuarto de Milla",
+  criollo: "Criollo", appaloosa: "Appaloosa", cuarto_de_milla: "Cuarto de Milla",
   pinto_americano: "Pinto Americano", pura_sangre_espanol: "Pura Sangre Español",
   pura_sangre_lusitano: "Pura Sangre Lusitano", otra: "Otra",
 };

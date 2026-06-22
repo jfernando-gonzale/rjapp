@@ -14,7 +14,7 @@
       "type": "string",
       "enum": [
         "criollo",
-        "apalusa",
+        "appaloosa",
         "cuarto_de_milla",
         "pinto_americano",
         "pura_sangre_espanol",

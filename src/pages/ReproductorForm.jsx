@@ -13,7 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const RAZAS = [
   { value: "criollo", label: "Criollo" },
-  { value: "apalusa", label: "Apalusa" },
+  { value: "appaloosa", label: "Appaloosa" },
   { value: "cuarto_de_milla", label: "Cuarto de Milla" },
   { value: "pinto_americano", label: "Pinto Americano" },
   { value: "pura_sangre_espanol", label: "Pura Sangre Español" },
