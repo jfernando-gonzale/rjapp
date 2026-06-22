@@ -7,6 +7,17 @@
       "format": "date",
       "description": "Fecha del gasto"
     },
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino",
+        "general"
+      ],
+      "default": "general",
+      "description": "Especie o l\u00ednea productiva"
+    },
     "categoria": {
       "type": "string",
       "enum": [

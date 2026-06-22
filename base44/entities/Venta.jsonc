@@ -2,6 +2,19 @@
   "name": "Venta",
   "type": "object",
   "properties": {
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino",
+        "semen_equino",
+        "servicio_reproductivo",
+        "otro"
+      ],
+      "default": "bovino",
+      "description": "Especie o tipo de venta"
+    },
     "fecha": {
       "type": "string",
       "format": "date",
@@ -54,6 +67,6 @@
   },
   "required": [
     "fecha",
-    "animal_id"
+    "especie"
   ]
 }

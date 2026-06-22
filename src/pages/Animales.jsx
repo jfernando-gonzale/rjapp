@@ -1,20 +1,29 @@
 import React, { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bug as Cow, Search, Eye, Plus, Filter, LayoutGrid, LayoutList } from "lucide-react";
+import { Search, Eye, Plus, Filter, LayoutGrid, LayoutList } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import GainIndicator from "@/components/shared/GainIndicator";
 import { formatCurrency, formatWeight, daysBetween, calcDailyGain, ESTADO_ANIMAL, SEXO_ANIMAL } from "@/lib/helpers";
 
+const ESPECIE_LABELS = { bovino: "🐄 Bovino", ovino: "🐑 Ovino", equino: "🐴 Equino" };
+const ESPECIE_TERMINOS = {
+  bovino: { macho: "Toro / Novillo", hembra: "Vaca / Novilla" },
+  ovino: { macho: "Carnero", hembra: "Oveja / Borrega" },
+  equino: { macho: "Reproductor / Padrillo", hembra: "Yegua / Receptora" },
+};
+
 export default function Animales() {
+  const urlParams = new URLSearchParams(window.location.search);
   const [search, setSearch] = useState("");
+  const [filterEspecie, setFilterEspecie] = useState(urlParams.get("especie") || "all");
   const [filterFinca, setFilterFinca] = useState("all");
   const [filterLote, setFilterLote] = useState("all");
   const [filterEstado, setFilterEstado] = useState("all");
@@ -29,24 +38,29 @@ export default function Animales() {
   const filtered = useMemo(() => {
     return animals.filter(a => {
       if (search && !a.numero?.toLowerCase().includes(search.toLowerCase()) && !a.nombre?.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterEspecie !== "all" && a.especie !== filterEspecie) return false;
       if (filterFinca !== "all" && a.finca_id !== filterFinca) return false;
       if (filterLote !== "all" && a.lote_id !== filterLote) return false;
       if (filterEstado !== "all" && a.estado !== filterEstado) return false;
       if (filterSexo !== "all" && a.sexo !== filterSexo) return false;
       return true;
     });
-  }, [animals, search, filterFinca, filterLote, filterEstado, filterSexo]);
+  }, [animals, search, filterEspecie, filterFinca, filterLote, filterEstado, filterSexo]);
 
   const getFincaName = (id) => fincas.find(f => f.id === id)?.nombre || "—";
   const getLoteName = (id) => lotes.find(l => l.id === id)?.nombre || "—";
 
   const getAnimalGain = (animal) => {
     if (!animal.ultimo_peso || !animal.peso_compra) return null;
-    const days = animal.fecha_ultimo_pesaje && animal.fecha_compra 
-      ? daysBetween(animal.fecha_compra, animal.fecha_ultimo_pesaje) 
-      : null;
+    const days = animal.fecha_ultimo_pesaje && animal.fecha_compra
+      ? daysBetween(animal.fecha_compra, animal.fecha_ultimo_pesaje) : null;
     if (!days || days === 0) return null;
     return calcDailyGain(animal.ultimo_peso, animal.peso_compra, days);
+  };
+
+  const getEspecieBadge = (especie) => {
+    const map = { bovino: "bg-amber-100 text-amber-800", ovino: "bg-green-100 text-green-800", equino: "bg-blue-100 text-blue-800" };
+    return map[especie] || "bg-gray-100 text-gray-600";
   };
 
   return (
@@ -70,16 +84,33 @@ export default function Animales() {
         </div>
       </PageHeader>
 
+      {/* Filtro rápido por especie */}
+      <div className="flex gap-2 mb-3 flex-wrap">
+        {[
+          { key: "all", label: "Todas" },
+          { key: "bovino", label: "🐄 Bovinos" },
+          { key: "ovino", label: "🐑 Ovinos" },
+          { key: "equino", label: "🐴 Equinos" },
+        ].map(e => (
+          <button
+            key={e.key}
+            onClick={() => setFilterEspecie(e.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              filterEspecie === e.key
+                ? "bg-amber-500 text-black border-amber-500"
+                : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+            }`}
+          >
+            {e.label}
+          </button>
+        ))}
+      </div>
+
       {/* Search & Filters */}
       <div className="space-y-3 mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar por número o nombre..." 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-            className="pl-10"
-          />
+          <Input placeholder="Buscar por número o nombre..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <div className={`grid grid-cols-2 lg:grid-cols-4 gap-2 ${showFilters ? '' : 'hidden lg:grid'}`}>
           <Select value={filterFinca} onValueChange={setFilterFinca}>
@@ -114,7 +145,7 @@ export default function Animales() {
       </div>
 
       {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={Cow} title="Sin animales" description="Registra tu primer animal" actionLabel="Nuevo Animal" onAction={() => window.location.href = "/animales/nuevo"} />
+        <EmptyState icon={() => <span className="text-4xl">🐄</span>} title="Sin animales" description="Registra tu primer animal" actionLabel="Nuevo Animal" onAction={() => window.location.href = "/animales/nuevo"} />
       ) : viewMode === "cards" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map(animal => {
@@ -124,11 +155,17 @@ export default function Animales() {
                 <Card className="p-4 hover:shadow-md transition-all cursor-pointer active:scale-[0.99]">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-heading font-bold text-lg">#{animal.numero}</span>
                         {animal.nombre && <span className="text-sm text-muted-foreground">({animal.nombre})</span>}
+                        {animal.especie && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${getEspecieBadge(animal.especie)}`}>
+                            {ESPECIE_LABELS[animal.especie]}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">{getFincaName(animal.finca_id)} • {getLoteName(animal.lote_id)}</p>
+                      {animal.raza && <p className="text-xs text-muted-foreground">{animal.raza}</p>}
                     </div>
                     <StatusBadge status={animal.estado} label={ESTADO_ANIMAL[animal.estado]} />
                   </div>
@@ -138,11 +175,13 @@ export default function Animales() {
                       <p className="text-[10px] text-muted-foreground">Último peso</p>
                     </div>
                     <div className="text-center bg-muted/50 rounded-lg py-1.5">
-                      <p className="font-bold text-sm">{animal.sexo ? SEXO_ANIMAL[animal.sexo] : "—"}</p>
+                      <p className="font-bold text-sm text-xs">
+                        {animal.sexo ? (ESPECIE_TERMINOS[animal.especie]?.[animal.sexo] || SEXO_ANIMAL[animal.sexo]) : "—"}
+                      </p>
                       <p className="text-[10px] text-muted-foreground">Sexo</p>
                     </div>
                     <div className="text-center bg-muted/50 rounded-lg py-1.5">
-                      {gain != null ? <GainIndicator dailyGain={gain} /> : <p className="text-xs text-muted-foreground">Sin datos</p>}
+                      {gain != null ? <GainIndicator dailyGain={gain} /> : <p className="text-xs text-muted-foreground">—</p>}
                       <p className="text-[10px] text-muted-foreground">Ganancia</p>
                     </div>
                   </div>
@@ -157,10 +196,10 @@ export default function Animales() {
             <thead className="bg-muted/50">
               <tr>
                 <th className="text-left p-3 font-medium">N°</th>
+                <th className="text-left p-3 font-medium">Especie</th>
                 <th className="text-left p-3 font-medium">Nombre</th>
+                <th className="text-left p-3 font-medium">Raza</th>
                 <th className="text-left p-3 font-medium">Finca</th>
-                <th className="text-left p-3 font-medium">Lote</th>
-                <th className="text-left p-3 font-medium">Sexo</th>
                 <th className="text-right p-3 font-medium">Peso</th>
                 <th className="text-left p-3 font-medium">Ganancia</th>
                 <th className="text-left p-3 font-medium">Estado</th>
@@ -173,10 +212,14 @@ export default function Animales() {
                 return (
                   <tr key={animal.id} className="border-t hover:bg-muted/30">
                     <td className="p-3 font-medium">#{animal.numero}</td>
+                    <td className="p-3">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${getEspecieBadge(animal.especie)}`}>
+                        {ESPECIE_LABELS[animal.especie] || "—"}
+                      </span>
+                    </td>
                     <td className="p-3">{animal.nombre || "—"}</td>
+                    <td className="p-3 text-muted-foreground">{animal.raza || "—"}</td>
                     <td className="p-3 text-muted-foreground">{getFincaName(animal.finca_id)}</td>
-                    <td className="p-3 text-muted-foreground">{getLoteName(animal.lote_id)}</td>
-                    <td className="p-3">{SEXO_ANIMAL[animal.sexo] || "—"}</td>
                     <td className="p-3 text-right font-medium">{animal.ultimo_peso ? formatWeight(animal.ultimo_peso) : "—"}</td>
                     <td className="p-3">{gain != null ? <GainIndicator dailyGain={gain} /> : <span className="text-muted-foreground text-xs">—</span>}</td>
                     <td className="p-3"><StatusBadge status={animal.estado} label={ESTADO_ANIMAL[animal.estado]} /></td>

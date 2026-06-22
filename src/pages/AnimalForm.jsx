@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ArrowLeft } from "lucide-react";
-import { ESTADO_ANIMAL } from "@/lib/helpers";
+import { ESTADO_ANIMAL, getRazasByEspecie } from "@/lib/helpers";
 
 export default function AnimalForm() {
   const navigate = useNavigate();
@@ -18,6 +18,10 @@ export default function AnimalForm() {
   const isEditing = !!id;
   const queryClient = useQueryClient();
   const [moreDetails, setMoreDetails] = useState(false);
+  const [especie, setEspecie] = useState("bovino");
+  const [pesoCompra, setPesoCompra] = useState("");
+  const [precioCompra, setPrecioCompra] = useState("");
+  const [precioKilo, setPrecioKilo] = useState("");
 
   const { data: animal } = useQuery({
     queryKey: ["animal", id],
@@ -29,6 +33,23 @@ export default function AnimalForm() {
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
 
+  useEffect(() => {
+    if (animal) {
+      setEspecie(animal.especie || "bovino");
+      setPesoCompra(animal.peso_compra?.toString() || "");
+      setPrecioCompra(animal.precio_compra?.toString() || "");
+      setPrecioKilo(animal.precio_kilo_compra?.toString() || "");
+    }
+  }, [animal]);
+
+  // Auto-calcular precio/kilo
+  useEffect(() => {
+    if (pesoCompra && precioCompra && parseFloat(pesoCompra) > 0) {
+      const kilo = Math.round(parseFloat(precioCompra) / parseFloat(pesoCompra));
+      setPrecioKilo(kilo.toString());
+    }
+  }, [pesoCompra, precioCompra]);
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Animal.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["animals"] }); navigate("/animales"); },
@@ -36,13 +57,17 @@ export default function AnimalForm() {
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Animal.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["animals"] }); queryClient.invalidateQueries({ queryKey: ["animal", id] }); navigate(`/animales/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["animals"] });
+      queryClient.invalidateQueries({ queryKey: ["animal", id] });
+      navigate(`/animales/${id}`);
+    },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const data = {};
+    const data = { especie };
     for (const [key, value] of fd.entries()) {
       if (value !== "") {
         if (["peso_compra", "precio_compra", "precio_kilo_compra", "costo_transporte_inicial", "otros_costos_iniciales"].includes(key)) {
@@ -52,7 +77,11 @@ export default function AnimalForm() {
         }
       }
     }
-    // Set initial weight from purchase weight
+    // Auto precio kilo
+    if (data.peso_compra && data.precio_compra && !data.precio_kilo_compra) {
+      data.precio_kilo_compra = Math.round(data.precio_compra / data.peso_compra);
+    }
+    // Set initial weight
     if (data.peso_compra && !isEditing) {
       data.ultimo_peso = data.peso_compra;
       data.fecha_ultimo_pesaje = data.fecha_compra || new Date().toISOString().split("T")[0];
@@ -62,19 +91,55 @@ export default function AnimalForm() {
   };
 
   const defaults = isEditing && animal ? animal : {};
+  const razas = getRazasByEspecie(especie);
+
+  const especieLabels = { bovino: "Bovino", ovino: "Ovino", equino: "Equino" };
+  const especieSexoLabel = {
+    bovino: { macho: "Macho (Toro / Novillo)", hembra: "Hembra (Vaca / Novilla)" },
+    ovino: { macho: "Macho (Carnero)", hembra: "Hembra (Oveja / Borrega)" },
+    equino: { macho: "Macho (Reproductor / Padrillo)", hembra: "Hembra (Yegua / Receptora)" },
+  };
+  const sexoLabels = especieSexoLabel[especie] || { macho: "Macho", hembra: "Hembra" };
 
   return (
     <div className="max-w-2xl mx-auto">
       <Button variant="ghost" className="gap-2 mb-4" onClick={() => navigate(-1)}>
         <ArrowLeft className="w-4 h-4" /> Volver
       </Button>
-      
-      <h1 className="text-2xl font-heading font-bold mb-6">{isEditing ? "Editar Animal" : "Nuevo Animal"}</h1>
+
+      <h1 className="text-2xl font-heading font-bold mb-6">
+        {isEditing ? `Editar ${especieLabels[especie]}` : `Nuevo Animal`}
+      </h1>
 
       <form onSubmit={handleSubmit}>
         <Card className="p-5 space-y-4 mb-4">
           <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Datos básicos</h2>
-          
+
+          {/* Especie */}
+          <div>
+            <Label>Especie *</Label>
+            <div className="flex gap-2 mt-1">
+              {[
+                { key: "bovino", label: "🐄 Bovino" },
+                { key: "ovino", label: "🐑 Ovino" },
+                { key: "equino", label: "🐴 Equino" },
+              ].map(e => (
+                <button
+                  key={e.key}
+                  type="button"
+                  onClick={() => setEspecie(e.key)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                    especie === e.key
+                      ? "bg-amber-500 text-black border-amber-500"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+                  }`}
+                >
+                  {e.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Número / Chapeta *</Label>
@@ -97,7 +162,7 @@ export default function AnimalForm() {
               </Select>
             </div>
             <div>
-              <Label>Lote</Label>
+              <Label>Lote / Potrero</Label>
               <Select name="lote_id" defaultValue={defaults.lote_id}>
                 <SelectTrigger><SelectValue placeholder="Sin lote" /></SelectTrigger>
                 <SelectContent>
@@ -113,14 +178,19 @@ export default function AnimalForm() {
               <Select name="sexo" defaultValue={defaults.sexo}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="macho">Macho</SelectItem>
-                  <SelectItem value="hembra">Hembra</SelectItem>
+                  <SelectItem value="macho">{sexoLabels.macho}</SelectItem>
+                  <SelectItem value="hembra">{sexoLabels.hembra}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Raza</Label>
-              <Input name="raza" defaultValue={defaults.raza} placeholder="Ej: Brahman" />
+              <Select name="raza" defaultValue={defaults.raza}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectContent>
+                  {razas.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Estado</Label>
@@ -136,7 +206,7 @@ export default function AnimalForm() {
 
         <Card className="p-5 space-y-4 mb-4">
           <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Datos de compra</h2>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Fecha de compra</Label>
@@ -144,18 +214,41 @@ export default function AnimalForm() {
             </div>
             <div>
               <Label>Peso al comprar (kg)</Label>
-              <Input name="peso_compra" type="number" step="0.1" defaultValue={defaults.peso_compra} placeholder="Ej: 280" />
+              <Input
+                name="peso_compra"
+                type="number"
+                step="0.1"
+                value={pesoCompra}
+                onChange={e => setPesoCompra(e.target.value)}
+                placeholder="Ej: 280"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Precio de compra total</Label>
-              <Input name="precio_compra" type="number" defaultValue={defaults.precio_compra} placeholder="Ej: 1500000" />
+              <Label>Precio de compra total ($)</Label>
+              <Input
+                name="precio_compra"
+                type="number"
+                value={precioCompra}
+                onChange={e => setPrecioCompra(e.target.value)}
+                placeholder="Ej: 1.500.000"
+              />
             </div>
             <div>
-              <Label>Precio por kilo</Label>
-              <Input name="precio_kilo_compra" type="number" step="1" defaultValue={defaults.precio_kilo_compra} placeholder="Ej: 5000" />
+              <Label>Precio por kilo (auto)</Label>
+              <Input
+                name="precio_kilo_compra"
+                type="number"
+                value={precioKilo}
+                onChange={e => setPrecioKilo(e.target.value)}
+                placeholder="Calculado automático"
+                className={pesoCompra && precioCompra ? "border-amber-400 bg-amber-50" : ""}
+              />
+              {pesoCompra && precioCompra && parseFloat(pesoCompra) > 0 && (
+                <p className="text-xs text-amber-600 mt-0.5">✓ Calculado automáticamente</p>
+              )}
             </div>
           </div>
         </Card>
@@ -217,8 +310,12 @@ export default function AnimalForm() {
           </CollapsibleContent>
         </Collapsible>
 
-        <Button type="submit" className="w-full h-12 text-base font-medium" disabled={createMutation.isPending || updateMutation.isPending}>
-          {isEditing ? "Guardar cambios" : "Registrar Animal"}
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold"
+          disabled={createMutation.isPending || updateMutation.isPending}
+        >
+          {isEditing ? "Guardar cambios" : `Registrar ${especieLabels[especie]}`}
         </Button>
       </form>
     </div>

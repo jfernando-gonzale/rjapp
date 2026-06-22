@@ -1,22 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, Phone, MapPin, User, Truck } from "lucide-react";
+import { Plus, Search, Phone, MapPin, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { TIPO_CLIENTE } from "@/lib/helpers";
 
-const emptyForm = { nombre: "", telefono: "", ciudad: "", departamento: "", finca_criadero: "", observaciones: "" };
+const TIPO_COLORS = {
+  bovinos: "bg-amber-100 text-amber-800",
+  ovinos: "bg-green-100 text-green-800",
+  equinos: "bg-blue-100 text-blue-800",
+  semen_equino: "bg-purple-100 text-purple-800",
+  general: "bg-gray-100 text-gray-600",
+};
+
+const emptyForm = { nombre: "", telefono: "", ciudad: "", departamento: "", finca_criadero: "", tipo_cliente: "general", observaciones: "" };
 
 export default function Clientes() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filterTipo, setFilterTipo] = useState("all");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
@@ -40,17 +51,35 @@ export default function Clientes() {
     },
   });
 
-  const filtered = clientes.filter(c =>
-    c.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-    c.ciudad?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => clientes.filter(c => {
+    if (filterTipo !== "all" && c.tipo_cliente !== filterTipo) return false;
+    if (search && !c.nombre?.toLowerCase().includes(search.toLowerCase()) && !c.ciudad?.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  }), [clientes, filterTipo, search]);
 
   const openNew = () => { setForm(emptyForm); setEditing(null); setOpen(true); };
   const openEdit = (c) => { setForm({ ...c }); setEditing(c.id); setOpen(true); };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Clientes" subtitle="Gestión de clientes de semen y animales" actionLabel="Nuevo Cliente" onAction={openNew} />
+    <div className="space-y-5">
+      <PageHeader title="Clientes" subtitle="Gestión de clientes por línea de negocio" actionLabel="Nuevo Cliente" onAction={openNew} />
+
+      {/* Filtro por tipo */}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { key: "all", label: "Todos" },
+          { key: "bovinos", label: "🐄 Bovinos" },
+          { key: "ovinos", label: "🐑 Ovinos" },
+          { key: "equinos", label: "🐴 Equinos" },
+          { key: "semen_equino", label: "💉 Semen Equino" },
+          { key: "general", label: "General" },
+        ].map(t => (
+          <button key={t.key} onClick={() => setFilterTipo(t.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              filterTipo === t.key ? "bg-amber-500 text-black border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+            }`}>{t.label}</button>
+        ))}
+      </div>
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -74,9 +103,16 @@ export default function Clientes() {
                   <User className="w-5 h-5 text-gray-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{c.nombre}</h3>
+                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                    <h3 className="font-semibold truncate">{c.nombre}</h3>
+                    {c.tipo_cliente && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${TIPO_COLORS[c.tipo_cliente] || "bg-gray-100 text-gray-600"}`}>
+                        {TIPO_CLIENTE[c.tipo_cliente] || c.tipo_cliente}
+                      </span>
+                    )}
+                  </div>
                   {c.telefono && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Phone className="w-3 h-3" /> {c.telefono}
                     </p>
                   )}
@@ -85,9 +121,7 @@ export default function Clientes() {
                       <MapPin className="w-3 h-3" /> {[c.ciudad, c.departamento].filter(Boolean).join(", ")}
                     </p>
                   )}
-                  {c.finca_criadero && (
-                    <p className="text-xs text-muted-foreground mt-1 truncate">{c.finca_criadero}</p>
-                  )}
+                  {c.finca_criadero && <p className="text-xs text-muted-foreground mt-1 truncate">{c.finca_criadero}</p>}
                 </div>
               </div>
             </Card>
@@ -105,6 +139,15 @@ export default function Clientes() {
               <div className="col-span-2 space-y-1.5">
                 <Label>Nombre *</Label>
                 <Input value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} placeholder="Nombre del cliente" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label>Tipo de cliente / Línea</Label>
+                <Select value={form.tipo_cliente} onValueChange={v => setForm(p => ({ ...p, tipo_cliente: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TIPO_CLIENTE).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Teléfono</Label>

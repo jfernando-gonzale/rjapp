@@ -106,3 +106,62 @@ export const SEXO_ANIMAL = {
   macho: "Macho",
   hembra: "Hembra",
 };
+
+export const ESPECIES = {
+  bovino: "Bovino",
+  ovino: "Ovino",
+  equino: "Equino",
+};
+
+export const RAZAS_BOVINAS = [
+  "Brahman Rojo", "Brahman Blanco", "Gyr", "Guzerá",
+  "Angus Rojo", "Angus Negro", "Charolais",
+  "Girolando", "Girolando Plus", "Brangus", "Simbrah",
+  "Holstein", "Jersey", "Cebú Comercial", "Cruce", "Otra"
+];
+
+export const RAZAS_OVINAS = [
+  "Katahdin", "Pelibuey", "Santa Inés", "Black Belly",
+  "Dorper", "Hampshire", "Suffolk", "Criolla", "Cruce", "Otra"
+];
+
+export const RAZAS_EQUINAS = [
+  "Criollo", "Apalusa", "Cuarto de Milla", "Pinto Americano",
+  "Pura Sangre Español", "Pura Sangre Lusitano", "Otra"
+];
+
+export function getRazasByEspecie(especie) {
+  if (especie === "bovino") return RAZAS_BOVINAS;
+  if (especie === "ovino") return RAZAS_OVINAS;
+  if (especie === "equino") return RAZAS_EQUINAS;
+  return [];
+}
+
+export const TIPO_CLIENTE = {
+  bovinos: "Bovinos",
+  ovinos: "Ovinos",
+  equinos: "Equinos",
+  semen_equino: "Semen Equino",
+  general: "General",
+};
+
+export const TIPO_VENTA = {
+  bovino: "Animal Bovino",
+  ovino: "Animal Ovino",
+  equino: "Animal Equino",
+  semen_equino: "Semen Equino",
+  servicio_reproductivo: "Servicio Reproductivo",
+  otro: "Otro",
+};
+
+export const LINEAS_PRODUCTIVAS = {
+  ceba_bovina: "Ceba Bovina",
+  reproduccion_bovina: "Reproducción Bovina",
+  ceba_ovina: "Ceba Ovina",
+  cria_ovina: "Cría Ovina",
+  yeguas_equinas: "Yeguas Equinas",
+  receptoras_equinas: "Receptoras Equinas",
+  reproductores_equinos: "Reproductores Equinos",
+  semen_fresco: "Semen Fresco",
+  general_finca: "General Finca",
+};

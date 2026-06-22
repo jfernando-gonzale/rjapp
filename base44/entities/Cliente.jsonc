@@ -22,6 +22,18 @@
       "type": "string",
       "description": "Nombre de la finca o criadero"
     },
+    "tipo_cliente": {
+      "type": "string",
+      "enum": [
+        "bovinos",
+        "ovinos",
+        "equinos",
+        "semen_equino",
+        "general"
+      ],
+      "default": "general",
+      "description": "Tipo / l\u00ednea de negocio del cliente"
+    },
     "observaciones": {
       "type": "string",
       "description": "Observaciones"

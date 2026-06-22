@@ -2,6 +2,16 @@
   "name": "Animal",
   "type": "object",
   "properties": {
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino"
+      ],
+      "default": "bovino",
+      "description": "Especie del animal"
+    },
     "numero": {
       "type": "string",
       "description": "N\u00famero/chapeta/identificaci\u00f3n visual"
@@ -111,6 +121,7 @@
     }
   },
   "required": [
+    "especie",
     "numero",
     "finca_id",
     "estado"

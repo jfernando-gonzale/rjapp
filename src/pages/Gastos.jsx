@@ -9,23 +9,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { DollarSign, Plus, ArrowLeft } from "lucide-react";
+import { DollarSign, Plus } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import { formatCurrency, CATEGORIA_GASTOS } from "@/lib/helpers";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+const ESPECIE_COLORS = {
+  bovino: "bg-amber-100 text-amber-800",
+  ovino: "bg-green-100 text-green-800",
+  equino: "bg-blue-100 text-blue-800",
+  general: "bg-gray-100 text-gray-600",
+};
+const ESPECIE_LABELS = { bovino: "🐄 Bovino", ovino: "🐑 Ovino", equino: "🐴 Equino", general: "General" };
+
 export default function Gastos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const urlParams = new URLSearchParams(window.location.search);
   const isNew = window.location.pathname.includes("/nuevo");
+  const urlParams = new URLSearchParams(window.location.search);
   const preAnimal = urlParams.get("animal");
 
   const [dialogOpen, setDialogOpen] = useState(isNew);
   const [filterCat, setFilterCat] = useState("all");
   const [filterFinca, setFilterFinca] = useState("all");
+  const [filterEspecie, setFilterEspecie] = useState("all");
 
   const { data: gastos = [], isLoading } = useQuery({ queryKey: ["gastos"], queryFn: () => base44.entities.Gasto.list("-fecha", 200) });
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
@@ -37,11 +46,12 @@ export default function Gastos() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["gastos"] }); setDialogOpen(false); if (isNew) navigate("/gastos"); },
   });
 
-  const filtered = gastos.filter(g => {
+  const filtered = useMemo(() => gastos.filter(g => {
     if (filterCat !== "all" && g.categoria !== filterCat) return false;
     if (filterFinca !== "all" && g.finca_id !== filterFinca) return false;
+    if (filterEspecie !== "all" && g.especie !== filterEspecie) return false;
     return true;
-  });
+  }), [gastos, filterCat, filterFinca, filterEspecie]);
 
   const totalFiltered = filtered.reduce((s, g) => s + (g.valor || 0), 0);
 
@@ -50,25 +60,49 @@ export default function Gastos() {
     const fd = new FormData(e.target);
     const data = {};
     for (const [key, value] of fd.entries()) {
-      if (value !== "") {
-        data[key] = key === "valor" ? parseFloat(value) : value;
-      }
+      if (value !== "") data[key] = key === "valor" ? parseFloat(value) : value;
     }
     createMutation.mutate(data);
   };
 
   return (
     <div>
-      <PageHeader title="Gastos" subtitle={`Total: ${formatCurrency(totalFiltered)}`}>
+      <PageHeader title="Gastos" subtitle={`Total filtrado: ${formatCurrency(totalFiltered)}`}>
+        <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="w-4 h-4" /> Nuevo Gasto</Button>
+      </PageHeader>
+
+      {/* Filtros especie rápidos */}
+      <div className="flex gap-2 mb-3 flex-wrap">
+        {[
+          { key: "all", label: "Todos" },
+          { key: "bovino", label: "🐄 Bovinos" },
+          { key: "ovino", label: "🐑 Ovinos" },
+          { key: "equino", label: "🐴 Equinos" },
+          { key: "general", label: "General" },
+        ].map(e => (
+          <button key={e.key} onClick={() => setFilterEspecie(e.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              filterEspecie === e.key ? "bg-amber-500 text-black border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+            }`}>{e.label}</button>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
         <Select value={filterCat} onValueChange={setFilterCat}>
-          <SelectTrigger className="w-36"><SelectValue placeholder="Categoría" /></SelectTrigger>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Categoría" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="all">Todas las categorías</SelectItem>
             {Object.entries(CATEGORIA_GASTOS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="w-4 h-4" /> Nuevo Gasto</Button>
-      </PageHeader>
+        <Select value={filterFinca} onValueChange={setFilterFinca}>
+          <SelectTrigger className="w-36"><SelectValue placeholder="Finca" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las fincas</SelectItem>
+            {fincas.map(f => <SelectItem key={f.id} value={f.id}>{f.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
       {filtered.length === 0 && !isLoading ? (
         <EmptyState icon={DollarSign} title="Sin gastos" description="Registra tu primer gasto" actionLabel="Nuevo Gasto" onAction={() => setDialogOpen(true)} />
@@ -82,9 +116,16 @@ export default function Gastos() {
                     <DollarSign className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <p className="font-medium">{g.descripcion || CATEGORIA_GASTOS[g.categoria] || g.categoria}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium">{g.descripcion || CATEGORIA_GASTOS[g.categoria] || g.categoria}</p>
+                      {g.especie && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${ESPECIE_COLORS[g.especie] || "bg-gray-100 text-gray-600"}`}>
+                          {ESPECIE_LABELS[g.especie]}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(g.fecha), "dd MMM yyyy", { locale: es })}
+                      {g.fecha ? format(new Date(g.fecha), "dd MMM yyyy", { locale: es }) : ""}
                       {g.tipo_gasto && ` • ${g.tipo_gasto}`}
                     </p>
                   </div>
@@ -107,6 +148,18 @@ export default function Gastos() {
             <div>
               <Label>Valor *</Label>
               <Input name="valor" type="number" required placeholder="Ej: 50000" className="text-lg h-12" />
+            </div>
+            <div>
+              <Label>Especie / Línea</Label>
+              <Select name="especie" defaultValue="general">
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General finca</SelectItem>
+                  <SelectItem value="bovino">🐄 Bovino</SelectItem>
+                  <SelectItem value="ovino">🐑 Ovino</SelectItem>
+                  <SelectItem value="equino">🐴 Equino</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Categoría *</Label>
@@ -143,7 +196,7 @@ export default function Gastos() {
               </Select>
             </div>
             <div>
-              <Label>Lote</Label>
+              <Label>Lote / Potrero</Label>
               <Select name="lote_id">
                 <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
                 <SelectContent>
@@ -157,7 +210,7 @@ export default function Gastos() {
                 <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
                 <SelectContent>
                   {animals.filter(a => a.estado === "activo").map(a => (
-                    <SelectItem key={a.id} value={a.id}>#{a.numero}</SelectItem>
+                    <SelectItem key={a.id} value={a.id}>#{a.numero} {a.nombre ? `(${a.nombre})` : ""}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
