@@ -126,9 +126,28 @@ export const RAZAS_OVINAS = [
 ];
 
 export const RAZAS_EQUINAS = [
-  "Criollo", "Apalusa", "Cuarto de Milla", "Pinto Americano",
+  "Criollo", "Appaloosa", "Cuarto de Milla", "Pinto Americano",
   "Pura Sangre Español", "Pura Sangre Lusitano", "Otra"
 ];
+
+// Calcula edad en formato "X años Y meses" o "Z meses" desde fecha de nacimiento.
+// Devuelve string. "" si no hay fecha.
+export function calcEdadDesdeNacimiento(fechaNacimiento) {
+  if (!fechaNacimiento) return "";
+  const nac = new Date(fechaNacimiento);
+  if (isNaN(nac.getTime())) return "";
+  const hoy = new Date();
+  let anos = hoy.getFullYear() - nac.getFullYear();
+  let meses = hoy.getMonth() - nac.getMonth();
+  if (hoy.getDate() < nac.getDate()) meses--;
+  if (meses < 0) { anos--; meses += 12; }
+  // Caso: fecha futura o fecha de hoy → 0
+  if (anos < 0) return "";
+  if (anos === 0 && meses <= 0) return "Recién nacido";
+  if (anos === 0) return `${meses} ${meses === 1 ? "mes" : "meses"}`;
+  if (meses === 0) return `${anos} ${anos === 1 ? "año" : "años"}`;
+  return `${anos} ${anos === 1 ? "año" : "años"} ${meses} ${meses === 1 ? "mes" : "meses"}`;
+}
 
 export function getRazasByEspecie(especie) {
   if (especie === "bovino") return RAZAS_BOVINAS;

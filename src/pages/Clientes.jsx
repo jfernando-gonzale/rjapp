@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { TIPO_CLIENTE } from "@/lib/helpers";
+import DepartamentoMunicipioFields from "@/components/shared/DepartamentoMunicipioFields";
 
 const TIPO_COLORS = {
   bovinos: "bg-amber-100 text-amber-800",
@@ -153,14 +154,13 @@ export default function Clientes() {
                 <Label>Teléfono</Label>
                 <Input value={form.telefono} onChange={e => setForm(p => ({ ...p, telefono: e.target.value }))} placeholder="Ej: 3001234567" />
               </div>
-              <div className="space-y-1.5">
-                <Label>Ciudad</Label>
-                <Input value={form.ciudad} onChange={e => setForm(p => ({ ...p, ciudad: e.target.value }))} placeholder="Ciudad" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Departamento</Label>
-                <Input value={form.departamento} onChange={e => setForm(p => ({ ...p, departamento: e.target.value }))} placeholder="Departamento" />
-              </div>
+              <DepartamentoMunicipioFields
+                departamento={form.departamento}
+                municipio={form.ciudad}
+                onChangeDepartamento={(v) => setForm(p => ({ ...p, departamento: v }))}
+                onChangeMunicipio={(v) => setForm(p => ({ ...p, ciudad: v }))}
+                labels={{ departamento: "Departamento", municipio: "Ciudad / Municipio" }}
+              />
               <div className="space-y-1.5">
                 <Label>Finca / Criadero</Label>
                 <Input value={form.finca_criadero} onChange={e => setForm(p => ({ ...p, finca_criadero: e.target.value }))} placeholder="Nombre del criadero" />

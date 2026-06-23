@@ -12,12 +12,23 @@ import { Fence, MapPin, User, Pencil } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DepartamentoMunicipioFields from "@/components/shared/DepartamentoMunicipioFields";
 import { formatCurrency, formatWeight } from "@/lib/helpers";
 
 export default function Fincas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const queryClient = useQueryClient();
+  const [ubicacionDepto, setUbicacionDepto] = useState("");
+  const [ubicacionMuni, setUbicacionMuni] = useState("");
+
+  // Parse "Municipio, Departamento" en valores separados (para editar)
+  const parseUbicacion = (ubicacionStr) => {
+    if (!ubicacionStr) return { dpto: "", muni: "" };
+    const parts = ubicacionStr.split(",").map(s => s.trim());
+    if (parts.length >= 2) return { dpto: parts[1], muni: parts[0] };
+    return { dpto: "", muni: parts[0] || "" };
+  };
 
   const { data: fincas = [], isLoading } = useQuery({
     queryKey: ["fincas"],
@@ -58,6 +69,8 @@ export default function Fincas() {
     e.preventDefault();
     const fd = new FormData(e.target);
     const data = Object.fromEntries(fd);
+    // ubicación combinada: "Municipio, Departamento"
+    data.ubicacion = [ubicacionMuni, ubicacionDepto].filter(Boolean).join(", ");
     if (editing) {
       updateMutation.mutate({ id: editing.id, data });
     } else {
@@ -66,12 +79,17 @@ export default function Fincas() {
   };
 
   const openEdit = (finca) => {
+    const { dpto, muni } = parseUbicacion(finca.ubicacion);
     setEditing(finca);
+    setUbicacionDepto(dpto);
+    setUbicacionMuni(muni);
     setDialogOpen(true);
   };
 
   const openNew = () => {
     setEditing(null);
+    setUbicacionDepto("");
+    setUbicacionMuni("");
     setDialogOpen(true);
   };
 
@@ -169,10 +187,13 @@ export default function Fincas() {
               <Label>Nombre *</Label>
               <Input name="nombre" defaultValue={editing?.nombre} required placeholder="Ej: Finca El Porvenir" />
             </div>
-            <div>
-              <Label>Ubicación</Label>
-              <Input name="ubicacion" defaultValue={editing?.ubicacion} placeholder="Municipio, departamento" />
-            </div>
+            <DepartamentoMunicipioFields
+              departamento={ubicacionDepto}
+              municipio={ubicacionMuni}
+              onChangeDepartamento={setUbicacionDepto}
+              onChangeMunicipio={setUbicacionMuni}
+              labels={{ departamento: "Departamento", municipio: "Ciudad / Municipio" }}
+            />
             <div>
               <Label>Responsable</Label>
               <Input name="responsable" defaultValue={editing?.responsable} placeholder="Nombre del encargado" />

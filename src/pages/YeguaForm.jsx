@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
 import { ESTADO_REPRODUCTIVO } from "@/lib/caballos";
+import RazaEquinaSelect from "@/components/shared/RazaEquinaSelect";
 import { toast } from "sonner";
 
 export default function YeguaForm() {
@@ -217,15 +218,11 @@ export default function YeguaForm() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="raza">Raza</Label>
-              <Input
-                id="raza"
-                value={formData.raza}
-                onChange={(e) => setFormData({ ...formData, raza: e.target.value })}
-                placeholder="Ej: Criolla, Mestiza"
-              />
-            </div>
+            <RazaEquinaSelect
+              value={formData.raza}
+              onChange={(v) => setFormData({ ...formData, raza: v })}
+              label="Raza"
+            />
             <div>
               <Label htmlFor="color">Color</Label>
               <Input

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, Save, Eye } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
-import { METODO_CONFIRMACION, calcFechaProbableParto } from "@/lib/caballos";
+import { METODO_CONFIRMACION } from "@/lib/caballos";
+import { getTerminologia, calcFechaProbablePartoEspecie } from "@/lib/reproduccion";
 import { toast } from "sonner";
 
 export default function ConfirmacionPreñezForm() {
@@ -19,10 +20,26 @@ export default function ConfirmacionPreñezForm() {
   const queryClient = useQueryClient();
   const yeguaIdParam = searchParams.get("yegua_id");
 
+  const especie = searchParams.get("especie") || "equino";
+  const T = getTerminologia(especie);
+  const esEquino = especie === "equino";
+
   const { data: yeguas = [] } = useQuery({
     queryKey: ["yeguas"],
     queryFn: () => base44.entities.Yegua.list(),
+    enabled: esEquino,
   });
+
+  const { data: animales = [] } = useQuery({
+    queryKey: ["animals"],
+    queryFn: () => base44.entities.Animal.list(),
+    enabled: !esEquino,
+  });
+
+  const hembrasEspecie = esEquino ? [] : animales.filter(a =>
+    a.especie === especie && a.estado === "activo" && (a.sexo === "hembra" || !a.sexo)
+  );
+  const hembras = esEquino ? yeguas : hembrasEspecie;
 
   const { data: inseminaciones = [] } = useQuery({
     queryKey: ["inseminaciones"],
@@ -40,30 +57,29 @@ export default function ConfirmacionPreñezForm() {
     observaciones: "",
   });
 
-  const yeguaSeleccionada = yeguas.find(y => y.id === formData.yegua_id);
-  const inseminacionesYegua = inseminaciones
+  const inseminacionesHembra = inseminaciones
     .filter(i => i.yegua_id === formData.yegua_id)
     .sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
 
-  // Auto-calculo fecha probable de parto
+  // Auto-calculo fecha probable de parto SEGUN ESPECIE
   useEffect(() => {
     if (formData.fecha_inseminacion) {
-      const fpp = calcFechaProbableParto(formData.fecha_inseminacion);
+      const fpp = calcFechaProbablePartoEspecie(formData.fecha_inseminacion, especie);
       setFormData(prev => ({ ...prev, fecha_probable_parto: fpp }));
     }
-  }, [formData.fecha_inseminacion]);
+  }, [formData.fecha_inseminacion, especie]);
 
   // Autoseleccionar última inseminación
   useEffect(() => {
-    if (formData.yegua_id && !formData.inseminacion_id && inseminacionesYegua.length > 0) {
-      const ultima = inseminacionesYegua[0];
+    if (formData.yegua_id && !formData.inseminacion_id && inseminacionesHembra.length > 0) {
+      const ultima = inseminacionesHembra[0];
       setFormData(prev => ({
         ...prev,
         inseminacion_id: ultima.id,
         fecha_inseminacion: ultima.fecha,
       }));
     }
-  }, [formData.yegua_id]);
+  }, [formData.yegua_id]); // eslint-disable-line
 
   const handleInseminacionChange = (insemId) => {
     const insem = inseminaciones.find(i => i.id === insemId);
@@ -76,16 +92,22 @@ export default function ConfirmacionPreñezForm() {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      // Crear la confirmación
       const confirmacion = await base44.entities.ConfirmacionPreñez.create(data);
 
-      // Actualizar la yegua a "preñada"
-      const updateData = {
-        estado_reproductivo: "preñada",
-        fecha_confirmacion_preñez: data.fecha,
-        fecha_probable_parto: data.fecha_probable_parto,
-      };
-      await base44.entities.Yegua.update(data.yegua_id, updateData);
+      if (esEquino) {
+        const updateData = {
+          estado_reproductivo: "preñada",
+          fecha_confirmacion_preñez: data.fecha,
+          fecha_probable_parto: data.fecha_probable_parto,
+        };
+        await base44.entities.Yegua.update(data.yegua_id, updateData);
+      } else {
+        // Bovinos/Ovinos: actualizamos observaciones del animal
+        await base44.entities.Animal.update(data.yegua_id, {
+          observaciones: (animales.find(a => a.id === data.yegua_id)?.observaciones || "") +
+            `\nPreñez confirmada el ${data.fecha}. Parto probable: ${data.fecha_probable_parto || "—"}`,
+        }).catch(() => {});
+      }
 
       // Actualizar resultado de la inseminación a "preñada"
       if (data.inseminacion_id) {
@@ -98,8 +120,9 @@ export default function ConfirmacionPreñezForm() {
       queryClient.invalidateQueries({ queryKey: ["yeguas"] });
       queryClient.invalidateQueries({ queryKey: ["confirmaciones"] });
       queryClient.invalidateQueries({ queryKey: ["inseminaciones"] });
-      toast.success("Preñez confirmada. Estado actualizado a 'Preñada'.");
-      navigate(yeguaIdParam ? `/caballos/yeguas/${yeguaIdParam}` : "/caballos");
+      queryClient.invalidateQueries({ queryKey: ["animals"] });
+      toast.success(T.prenezExito);
+      navigate(yeguaIdParam ? (esEquino ? `/caballos/yeguas/${yeguaIdParam}` : `/animales/${yeguaIdParam}`) : "/reproduccion");
     },
     onError: (error) => {
       toast.error("Error: " + (error.message || "intente nuevamente"));
@@ -109,7 +132,7 @@ export default function ConfirmacionPreñezForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.yegua_id) {
-      toast.error("Selecciona una yegua");
+      toast.error(T.toastHembra);
       return;
     }
     if (!formData.fecha) {
@@ -117,7 +140,7 @@ export default function ConfirmacionPreñezForm() {
       return;
     }
     if (!formData.fecha_inseminacion) {
-      toast.error("La fecha de inseminación relacionada es obligatoria");
+      toast.error("La fecha de inseminación / servicio relacionada es obligatoria");
       return;
     }
     saveMutation.mutate(formData);
@@ -125,7 +148,7 @@ export default function ConfirmacionPreñezForm() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Confirmar Preñez" subtitle="Confirma la preñez de una yegua">
+      <PageHeader title={T.prenezTitulo} subtitle={T.prenezSubtitulo}>
         <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
           <ArrowLeft className="w-4 h-4" /> Volver
         </Button>
@@ -134,7 +157,7 @@ export default function ConfirmacionPreñezForm() {
       <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
         <Card className="p-6 space-y-4">
           <div>
-            <Label>Yegua *</Label>
+            <Label>{T.hembra} *</Label>
             <Select
               value={formData.yegua_id}
               onValueChange={(v) => setFormData({
@@ -146,11 +169,11 @@ export default function ConfirmacionPreñezForm() {
               disabled={Boolean(yeguaIdParam)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar yegua" />
+                <SelectValue placeholder={T.hembraPlaceholder} />
               </SelectTrigger>
               <SelectContent>
-                {yeguas.map(y => (
-                  <SelectItem key={y.id} value={y.id}>{y.nombre}</SelectItem>
+                {hembras.map(h => (
+                  <SelectItem key={h.id} value={h.id}>{h.nombre || h.numero}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -185,18 +208,18 @@ export default function ConfirmacionPreñezForm() {
             </div>
           </div>
 
-          {formData.yegua_id && inseminacionesYegua.length > 0 && (
+          {formData.yegua_id && inseminacionesHembra.length > 0 && (
             <div>
-              <Label>Inseminación relacionada *</Label>
+              <Label>{esEquino ? "Inseminación" : "Servicio / inseminación"} relacionada *</Label>
               <Select
                 value={formData.inseminacion_id}
                 onValueChange={handleInseminacionChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar inseminación" />
+                  <SelectValue placeholder={esEquino ? "Seleccionar inseminación" : "Seleccionar servicio"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {inseminacionesYegua.map(i => (
+                  {inseminacionesHembra.map(i => (
                     <SelectItem key={i.id} value={i.id}>
                       {i.fecha} - {i.reproductor || "Sin reproductor"}
                     </SelectItem>
@@ -206,9 +229,9 @@ export default function ConfirmacionPreñezForm() {
             </div>
           )}
 
-          {formData.yegua_id && inseminacionesYegua.length === 0 && (
+          {formData.yegua_id && inseminacionesHembra.length === 0 && (
             <div>
-              <Label htmlFor="fecha_insem">Fecha de inseminación relacionada *</Label>
+              <Label htmlFor="fecha_insem">Fecha de {esEquino ? "inseminación" : "servicio / inseminación"} relacionada *</Label>
               <Input
                 id="fecha_insem"
                 type="date"
@@ -228,7 +251,7 @@ export default function ConfirmacionPreñezForm() {
               onChange={(e) => setFormData({ ...formData, fecha_probable_parto: e.target.value })}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Calculada automáticamente: inseminación + 340 días. Puedes editarla manualmente.
+              Calculada automáticamente: {T.gestacionTexto}. Puedes editarla manualmente.
             </p>
           </div>
 

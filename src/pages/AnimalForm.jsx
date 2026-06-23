@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ArrowLeft } from "lucide-react";
-import { ESTADO_ANIMAL, getRazasByEspecie } from "@/lib/helpers";
+import { ESTADO_ANIMAL, getRazasByEspecie, calcEdadDesdeNacimiento } from "@/lib/helpers";
 
 export default function AnimalForm() {
   const navigate = useNavigate();
@@ -22,6 +22,8 @@ export default function AnimalForm() {
   const [pesoCompra, setPesoCompra] = useState("");
   const [precioCompra, setPrecioCompra] = useState("");
   const [precioKilo, setPrecioKilo] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
+  const [edadAprox, setEdadAprox] = useState("");
 
   const { data: animal } = useQuery({
     queryKey: ["animal", id],
@@ -39,6 +41,8 @@ export default function AnimalForm() {
       setPesoCompra(animal.peso_compra?.toString() || "");
       setPrecioCompra(animal.precio_compra?.toString() || "");
       setPrecioKilo(animal.precio_kilo_compra?.toString() || "");
+      setFechaNacimiento(animal.fecha_nacimiento || "");
+      setEdadAprox(animal.edad_aproximada || "");
     }
   }, [animal]);
 
@@ -85,6 +89,14 @@ export default function AnimalForm() {
     if (data.peso_compra && !isEditing) {
       data.ultimo_peso = data.peso_compra;
       data.fecha_ultimo_pesaje = data.fecha_compra || new Date().toISOString().split("T")[0];
+    }
+    // Edad automática desde fecha de nacimiento
+    if (fechaNacimiento) {
+      data.fecha_nacimiento = fechaNacimiento;
+      const edadCalc = calcEdadDesdeNacimiento(fechaNacimiento);
+      data.edad_aproximada = edadCalc || edadAprox;
+    } else if (edadAprox) {
+      data.edad_aproximada = edadAprox;
     }
     if (isEditing) updateMutation.mutate(data);
     else createMutation.mutate(data);
@@ -275,11 +287,25 @@ export default function AnimalForm() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Fecha de nacimiento</Label>
-                  <Input name="fecha_nacimiento" type="date" defaultValue={defaults.fecha_nacimiento} />
+                  <Input
+                    name="fecha_nacimiento"
+                    type="date"
+                    value={fechaNacimiento}
+                    onChange={(e) => setFechaNacimiento(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label>Edad aproximada</Label>
-                  <Input name="edad_aproximada" defaultValue={defaults.edad_aproximada} placeholder="Ej: 2 años" />
+                  <Input
+                    name="edad_aproximada"
+                    value={calcEdadDesdeNacimiento(fechaNacimiento) || edadAprox}
+                    disabled={Boolean(calcEdadDesdeNacimiento(fechaNacimiento))}
+                    onChange={(e) => setEdadAprox(e.target.value)}
+                    placeholder={calcEdadDesdeNacimiento(fechaNacimiento) ? "" : "Ej: 2 años"}
+                  />
+                  {calcEdadDesdeNacimiento(fechaNacimiento) && (
+                    <p className="text-xs text-amber-600 mt-0.5">✓ Calculada automáticamente</p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

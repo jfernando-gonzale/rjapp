@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, Save, Baby } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
 import { RESULTADO_PARTO, SEXO_CRIA } from "@/lib/caballos";
+import { getTerminologia } from "@/lib/reproduccion";
 import { toast } from "sonner";
 
 export default function PartoForm() {
@@ -19,15 +20,26 @@ export default function PartoForm() {
   const queryClient = useQueryClient();
   const yeguaIdParam = searchParams.get("yegua_id");
 
+  const especie = searchParams.get("especie") || "equino";
+  const T = getTerminologia(especie);
+  const esEquino = especie === "equino";
+
   const { data: yeguas = [] } = useQuery({
     queryKey: ["yeguas"],
     queryFn: () => base44.entities.Yegua.list(),
+    enabled: esEquino,
   });
 
-  const { data: fincas = [] } = useQuery({
-    queryKey: ["fincas"],
-    queryFn: () => base44.entities.Finca.list(),
+  const { data: animales = [] } = useQuery({
+    queryKey: ["animals"],
+    queryFn: () => base44.entities.Animal.list(),
+    enabled: !esEquino,
   });
+
+  const hembrasEspecie = esEquino ? [] : animales.filter(a =>
+    a.especie === especie && a.estado === "activo" && (a.sexo === "hembra" || !a.sexo)
+  );
+  const hembras = esEquino ? yeguas : hembrasEspecie;
 
   const [formData, setFormData] = useState({
     yegua_id: yeguaIdParam || "",
@@ -37,49 +49,70 @@ export default function PartoForm() {
     nombre_cria: "",
     color_cria: "",
     observaciones: "",
+    // Campos para ovinos (camada)
+    num_nacidos: "",
+    num_vivos: "",
+    num_muertos: "",
+    tipo_parto: "simple",
   });
-
-  const yeguaSeleccionada = yeguas.find(y => y.id === formData.yegua_id);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      // Crear el registro del parto
       const parto = await base44.entities.Parto.create(data);
 
       let criaId = null;
 
-      // Si el resultado es cría viva, crear automáticamente el registro de la cría
       if (data.resultado === "cria_viva") {
-        const yegua = yeguas.find(y => y.id === data.yegua_id);
-        const cria = await base44.entities.Cria.create({
-          nombre: data.nombre_cria || "",
-          madre_id: data.yegua_id,
-          finca_id: yegua?.finca_id || "",
-          fecha_nacimiento: data.fecha,
-          sexo: data.sexo_cria,
-          color: data.color_cria || "",
-          estado: "lactante",
-          parto_id: parto.id,
-        });
-        criaId = cria.id;
-
-        // Actualizar el parto con el ID de la cría
-        await base44.entities.Parto.update(parto.id, { cria_id: criaId });
+        if (esEquino) {
+          const yegua = yeguas.find(y => y.id === data.yegua_id);
+          const cria = await base44.entities.Cria.create({
+            nombre: data.nombre_cria || "",
+            madre_id: data.yegua_id,
+            finca_id: yegua?.finca_id || "",
+            fecha_nacimiento: data.fecha,
+            sexo: data.sexo_cria,
+            color: data.color_cria || "",
+            estado: "lactante",
+            parto_id: parto.id,
+          });
+          criaId = cria.id;
+          await base44.entities.Parto.update(parto.id, { cria_id: criaId });
+        } else {
+          // Bovinos/Ovinos: creamos una Cria con especie = animal de la madre, o marcamos al animal como parido
+          const madre = animales.find(a => a.id === data.yegua_id);
+          const cria = await base44.entities.Cria.create({
+            nombre: data.nombre_cria || "",
+            madre_id: data.yegua_id,
+            finca_id: madre?.finca_id || "",
+            fecha_nacimiento: data.fecha,
+            sexo: data.sexo_cria,
+            color: data.color_cria || "",
+            estado: "lactante",
+            parto_id: parto.id,
+          });
+          criaId = cria.id;
+          await base44.entities.Parto.update(parto.id, { cria_id: criaId });
+        }
       }
 
-      // Actualizar la yegua a "parida"
-      const updateData = {
-        estado_reproductivo: "parida",
-        fecha_ultimo_parto: data.fecha,
-        fecha_probable_parto: null,
-        fecha_confirmacion_preñez: null,
-        fecha_ultima_inseminacion: null,
-        repeticiones_celo: 0,
-      };
-      if (criaId) {
-        updateData.cria_actual_id = criaId;
+      if (esEquino) {
+        const updateData = {
+          estado_reproductivo: "parida",
+          fecha_ultimo_parto: data.fecha,
+          fecha_probable_parto: null,
+          fecha_confirmacion_preñez: null,
+          fecha_ultima_inseminacion: null,
+          repeticiones_celo: 0,
+        };
+        if (criaId) updateData.cria_actual_id = criaId;
+        await base44.entities.Yegua.update(data.yegua_id, updateData);
+      } else {
+        // Bovinos/Ovinos: actualizamos observaciones del animal
+        await base44.entities.Animal.update(data.yegua_id, {
+          observaciones: (animales.find(a => a.id === data.yegua_id)?.observaciones || "") +
+            `\nParto el ${data.fecha}: ${data.resultado}.`,
+        }).catch(() => {});
       }
-      await base44.entities.Yegua.update(data.yegua_id, updateData);
 
       return parto;
     },
@@ -87,8 +120,9 @@ export default function PartoForm() {
       queryClient.invalidateQueries({ queryKey: ["yeguas"] });
       queryClient.invalidateQueries({ queryKey: ["partos"] });
       queryClient.invalidateQueries({ queryKey: ["crias"] });
-      toast.success("Parto registrado. Estado actualizado a 'Parida'.");
-      navigate(yeguaIdParam ? `/caballos/yeguas/${yeguaIdParam}` : "/caballos");
+      queryClient.invalidateQueries({ queryKey: ["animals"] });
+      toast.success(T.partoExito);
+      navigate(yeguaIdParam ? (esEquino ? `/caballos/yeguas/${yeguaIdParam}` : `/animales/${yeguaIdParam}`) : "/reproduccion");
     },
     onError: (error) => {
       toast.error("Error: " + (error.message || "intente nuevamente"));
@@ -98,7 +132,7 @@ export default function PartoForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.yegua_id) {
-      toast.error("Selecciona una yegua");
+      toast.error(T.toastHembra);
       return;
     }
     if (!formData.fecha) {
@@ -110,7 +144,7 @@ export default function PartoForm() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Registrar Parto" subtitle="Registra el parto de una yegua">
+      <PageHeader title={T.partoTitulo} subtitle={T.partoSubtitulo}>
         <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
           <ArrowLeft className="w-4 h-4" /> Volver
         </Button>
@@ -119,18 +153,18 @@ export default function PartoForm() {
       <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
         <Card className="p-6 space-y-4">
           <div>
-            <Label>Yegua *</Label>
+            <Label>{T.hembra} *</Label>
             <Select
               value={formData.yegua_id}
               onValueChange={(v) => setFormData({ ...formData, yegua_id: v })}
               disabled={Boolean(yeguaIdParam)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar yegua" />
+                <SelectValue placeholder={T.hembraPlaceholder} />
               </SelectTrigger>
               <SelectContent>
-                {yeguas.map(y => (
-                  <SelectItem key={y.id} value={y.id}>{y.nombre}</SelectItem>
+                {hembras.map(h => (
+                  <SelectItem key={h.id} value={h.id}>{h.nombre || h.numero}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -165,10 +199,69 @@ export default function PartoForm() {
             </div>
           </div>
 
+          {/* Campos para ovinos: camada */}
+          {especie === "ovino" && (
+            <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm font-medium text-muted-foreground">Datos de la camada</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="num_nacidos">N° nacidos</Label>
+                  <Input
+                    id="num_nacidos"
+                    type="number"
+                    min="0"
+                    value={formData.num_nacidos}
+                    onChange={(e) => setFormData({ ...formData, num_nacidos: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="num_vivos">N° vivos</Label>
+                  <Input
+                    id="num_vivos"
+                    type="number"
+                    min="0"
+                    value={formData.num_vivos}
+                    onChange={(e) => setFormData({ ...formData, num_vivos: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="num_muertos">N° muertos</Label>
+                  <Input
+                    id="num_muertos"
+                    type="number"
+                    min="0"
+                    value={formData.num_muertos}
+                    onChange={(e) => setFormData({ ...formData, num_muertos: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label>Tipo de parto</Label>
+                  <Select
+                    value={formData.tipo_parto}
+                    onValueChange={(v) => setFormData({ ...formData, tipo_parto: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="simple">Simple</SelectItem>
+                      <SelectItem value="doble">Doble</SelectItem>
+                      <SelectItem value="triple">Triple</SelectItem>
+                      <SelectItem value="multiple">Múltiple</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Datos de la cría - solo si es cría viva */}
           {formData.resultado === "cria_viva" && (
             <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm font-medium text-muted-foreground">Datos de la cría (se creará automáticamente)</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Datos de la cría ({T.cria}) — se creará automáticamente
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Sexo de la cría</Label>
@@ -187,12 +280,12 @@ export default function PartoForm() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="nombre_cria">Nombre o número de la cría</Label>
+                  <Label htmlFor="nombre_cria">{T.criaNombreLabel}</Label>
                   <Input
                     id="nombre_cria"
                     value={formData.nombre_cria}
                     onChange={(e) => setFormData({ ...formData, nombre_cria: e.target.value })}
-                    placeholder="Ej: Potranca 01"
+                    placeholder={T.criaNombrePlaceholder}
                   />
                 </div>
               </div>
@@ -202,7 +295,7 @@ export default function PartoForm() {
                   id="color_cria"
                   value={formData.color_cria}
                   onChange={(e) => setFormData({ ...formData, color_cria: e.target.value })}
-                  placeholder="Ej: Alazán"
+                  placeholder={esEquino ? "Ej: Alazán" : "Ej: Negro, blanco"}
                 />
               </div>
             </div>

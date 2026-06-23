@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import FechaNacimientoEdad from "@/components/shared/FechaNacimientoEdad";
 
 const RAZAS = [
   { value: "criollo", label: "Criollo" },
@@ -86,14 +87,12 @@ export default function ReproductorForm() {
             <Label>Color</Label>
             <Input value={form.color} onChange={set("color")} placeholder="Ej: Alazán tostado" />
           </div>
-          <div>
-            <Label>Fecha de nacimiento</Label>
-            <Input type="date" value={form.fecha_nacimiento} onChange={set("fecha_nacimiento")} />
-          </div>
-          <div>
-            <Label>Edad aproximada</Label>
-            <Input value={form.edad_aproximada} onChange={set("edad_aproximada")} placeholder="Ej: 7 años" />
-          </div>
+          <FechaNacimientoEdad
+            fechaNacimiento={form.fecha_nacimiento}
+            edad={form.edad_aproximada}
+            onChangeFecha={(v) => setForm(p => ({ ...p, fecha_nacimiento: v }))}
+            onChangeEdad={(v) => setForm(p => ({ ...p, edad_aproximada: v }))}
+          />
           <div>
             <Label>Finca</Label>
             <Select value={form.finca_id} onValueChange={set("finca_id")}>

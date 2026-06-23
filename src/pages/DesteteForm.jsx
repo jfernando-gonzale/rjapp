@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, Save, GitBranch } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
-import EstadoReproductivoBadge from "@/components/caballos/EstadoReproductivoBadge";
-import { ESTADO_REPRODUCTIVO, calcEdadDestete } from "@/lib/caballos";
+import { calcEdadDestete } from "@/lib/caballos";
+import { getTerminologia } from "@/lib/reproduccion";
 import { toast } from "sonner";
 
 export default function DesteteForm() {
@@ -19,6 +19,10 @@ export default function DesteteForm() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const madreIdParam = searchParams.get("madre_id");
+
+  const especie = searchParams.get("especie") || "equino";
+  const T = getTerminologia(especie);
+  const esEquino = especie === "equino";
 
   const { data: crias = [] } = useQuery({
     queryKey: ["crias"],
@@ -28,6 +32,13 @@ export default function DesteteForm() {
   const { data: yeguas = [] } = useQuery({
     queryKey: ["yeguas"],
     queryFn: () => base44.entities.Yegua.list(),
+    enabled: esEquino,
+  });
+
+  const { data: animales = [] } = useQuery({
+    queryKey: ["animals"],
+    queryFn: () => base44.entities.Animal.list(),
+    enabled: !esEquino,
   });
 
   const [formData, setFormData] = useState({
@@ -40,13 +51,16 @@ export default function DesteteForm() {
   // Filtrar crías lactantes (candidatas a destete)
   const criasLactantes = crias.filter(c => c.estado === "lactante");
 
-  // Si viene madre_id, mostrar solo las crías de esa yegua
+  // Si viene madre_id, mostrar solo las crías de esa madre (yegua o animal)
   const criasFiltradas = madreIdParam
     ? criasLactantes.filter(c => c.madre_id === madreIdParam)
     : criasLactantes;
 
   const criaSeleccionada = crias.find(c => c.id === formData.cria_id);
-  const yeguaMadre = criaSeleccionada ? yeguas.find(y => y.id === criaSeleccionada.madre_id) : null;
+  // Para equinos la madre es una Yegua; para bovinos/ovinos la madre es un Animal
+  const madreMadre = esEquino
+    ? (criaSeleccionada ? yeguas.find(y => y.id === criaSeleccionada.madre_id) : null)
+    : (criaSeleccionada ? animales.find(a => a.id === criaSeleccionada.madre_id) : null);
 
   const edadDestete = criaSeleccionada?.fecha_nacimiento && formData.fecha_destete
     ? calcEdadDestete(criaSeleccionada.fecha_nacimiento, formData.fecha_destete)
@@ -64,12 +78,20 @@ export default function DesteteForm() {
         edad_destete_dias: edadDestete,
       });
 
-      // Actualizar la yegua madre
+      // Actualizar la madre
       if (cria.madre_id) {
-        await base44.entities.Yegua.update(cria.madre_id, {
-          estado_reproductivo: data.nuevo_estado_yegua,
-          cria_actual_id: null,
-        });
+        if (esEquino) {
+          await base44.entities.Yegua.update(cria.madre_id, {
+            estado_reproductivo: data.nuevo_estado_yegua,
+            cria_actual_id: null,
+          });
+        } else {
+          await base44.entities.Animal.update(cria.madre_id, {
+            // El animal no tiene un campo de estado reproductivo dedicado; actualizamos observaciones
+            observaciones: (animales.find(a => a.id === cria.madre_id)?.observaciones || "") +
+              `\nCría destetada el ${data.fecha_destete}.`,
+          }).catch(() => {});
+        }
       }
 
       return { cria, edadDestete };
@@ -77,8 +99,9 @@ export default function DesteteForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["crias"] });
       queryClient.invalidateQueries({ queryKey: ["yeguas"] });
-      toast.success(`Destete registrado. Cría destetada a los ${edadDestete} días.`);
-      navigate(madreIdParam ? `/caballos/yeguas/${madreIdParam}` : "/caballos/crias");
+      queryClient.invalidateQueries({ queryKey: ["animals"] });
+      toast.success(`${T.desteteExito} Cría destetada a los ${edadDestete} días.`);
+      navigate(madreIdParam ? (esEquino ? `/caballos/yeguas/${madreIdParam}` : `/animales/${madreIdParam}`) : (esEquino ? "/caballos/crias" : "/reproduccion"));
     },
     onError: (error) => {
       toast.error("Error: " + (error.message || "intente nuevamente"));
@@ -88,7 +111,7 @@ export default function DesteteForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.cria_id) {
-      toast.error("Selecciona una cría");
+      toast.error(T.toastCria);
       return;
     }
     if (!formData.fecha_destete) {
@@ -100,7 +123,7 @@ export default function DesteteForm() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Registrar Destete" subtitle="Marca una cría como destetada">
+      <PageHeader title={T.desteteTitulo} subtitle={T.desteteSubtitulo}>
         <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
           <ArrowLeft className="w-4 h-4" /> Volver
         </Button>
@@ -115,14 +138,16 @@ export default function DesteteForm() {
               onValueChange={(v) => setFormData({ ...formData, cria_id: v })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar cría lactante" />
+                <SelectValue placeholder={T.criaPlaceholder} />
               </SelectTrigger>
               <SelectContent>
                 {criasFiltradas.map(c => {
-                  const madre = yeguas.find(y => y.id === c.madre_id);
+                  const madre = esEquino
+                    ? yeguas.find(y => y.id === c.madre_id)
+                    : animales.find(a => a.id === c.madre_id);
                   return (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.nombre || "Sin nombre"} - Madre: {madre?.nombre || "?"} ({c.fecha_nacimiento})
+                      {c.nombre || "Sin nombre"} - Madre: {madre?.nombre || madre?.numero || "?"} ({c.fecha_nacimiento})
                     </SelectItem>
                   );
                 })}
@@ -141,7 +166,7 @@ export default function DesteteForm() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Madre:</span>
-                <span className="font-medium">{yeguaMadre?.nombre || "?"}</span>
+                <span className="font-medium">{madreMadre?.nombre || madreMadre?.numero || "?"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Nacimiento:</span>
@@ -168,21 +193,23 @@ export default function DesteteForm() {
             </div>
           )}
 
-          <div>
-            <Label>Estado de la yegua madre después del destete</Label>
-            <Select
-              value={formData.nuevo_estado_yegua}
-              onValueChange={(v) => setFormData({ ...formData, nuevo_estado_yegua: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="descanso">En descanso</SelectItem>
-                <SelectItem value="vacia">Vacía</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {esEquino && (
+            <div>
+              <Label>{T.estadoMadreLabel}</Label>
+              <Select
+                value={formData.nuevo_estado_yegua}
+                onValueChange={(v) => setFormData({ ...formData, nuevo_estado_yegua: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="descanso">En descanso</SelectItem>
+                  <SelectItem value="vacia">Vacía</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="observaciones">Observaciones</Label>
