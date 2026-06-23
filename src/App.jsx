@@ -32,7 +32,6 @@ import Despachos from '@/pages/Despachos';
 import Tratamientos from '@/pages/Tratamientos';
 import Reproduccion from '@/pages/Reproduccion';
 import Reportes from '@/pages/Reportes';
-import Calendario from '@/pages/Calendario';
 import Configuracion from '@/pages/Configuracion';
 
 // Reproductores equinos
@@ -51,6 +50,7 @@ import RepeticionCeloForm from '@/pages/RepeticionCeloForm';
 import PartoForm from '@/pages/PartoForm';
 import DesteteForm from '@/pages/DesteteForm';
 import CriasList from '@/pages/CriasList';
+import CalendarioIntegral from '@/pages/CalendarioIntegral';
 import CalendarioReproductivo from '@/pages/CalendarioReproductivo';
 
 const AuthenticatedApp = () => {
@@ -112,7 +112,7 @@ const AuthenticatedApp = () => {
 
           {/* Análisis */}
           <Route path="/reportes" element={<Reportes />} />
-          <Route path="/calendario" element={<Calendario />} />
+          <Route path="/calendario" element={<CalendarioIntegral />} />
 
           {/* Sistema */}
           <Route path="/configuracion" element={<Configuracion />} />

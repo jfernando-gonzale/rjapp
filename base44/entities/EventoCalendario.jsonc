@@ -1,0 +1,126 @@
+{
+  "name": "EventoCalendario",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo del evento"
+    },
+    "tipo_evento": {
+      "type": "string",
+      "enum": [
+        "reproduccion",
+        "tratamiento",
+        "pesaje",
+        "potrero",
+        "despacho",
+        "colecta",
+        "tarea"
+      ],
+      "default": "tarea",
+      "description": "Tipo/categor\u00eda del evento"
+    },
+    "subtipo": {
+      "type": "string",
+      "description": "Subtipo: inseminacion, vacuna, purga, rotacion, etc."
+    },
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino",
+        "general"
+      ],
+      "default": "general",
+      "description": "Especie asociada"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote / potrero"
+    },
+    "animal_id": {
+      "type": "string",
+      "description": "ID del animal"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del evento"
+    },
+    "hora": {
+      "type": "string",
+      "description": "Hora opcional"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "pendiente",
+        "completado",
+        "vencido",
+        "reprogramado",
+        "cancelado"
+      ],
+      "default": "pendiente",
+      "description": "Estado del evento"
+    },
+    "es_recurrente": {
+      "type": "boolean",
+      "default": false,
+      "description": "Si se repite"
+    },
+    "frecuencia": {
+      "type": "string",
+      "enum": [
+        "no_repite",
+        "semanal",
+        "mensual",
+        "trimestral",
+        "semestral",
+        "anual",
+        "personalizado"
+      ],
+      "default": "no_repite",
+      "description": "Frecuencia de repetici\u00f3n"
+    },
+    "intervalo_dias": {
+      "type": "number",
+      "description": "Intervalo en d\u00edas (personalizado)"
+    },
+    "origen": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "tratamiento",
+        "reproduccion",
+        "despacho",
+        "colecta"
+      ],
+      "default": "manual",
+      "description": "Origen del evento (manual o derivado de un m\u00f3dulo)"
+    },
+    "origen_id": {
+      "type": "string",
+      "description": "ID del registro de origen (tratamiento, despacho, etc.)"
+    },
+    "es_derivado": {
+      "type": "boolean",
+      "default": false,
+      "description": "True si fue derivado autom\u00e1ticamente de otro m\u00f3dulo"
+    }
+  },
+  "required": [
+    "titulo",
+    "tipo_evento",
+    "fecha",
+    "estado"
+  ]
+}

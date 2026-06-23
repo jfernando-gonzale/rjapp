@@ -14,6 +14,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { formatCurrency, TIPO_TRATAMIENTO } from "@/lib/helpers";
+import { FRECUENCIA_TRAT_LABELS, calcularProximaFechaTrat } from "@/lib/calendario";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -35,6 +36,9 @@ export default function Tratamientos() {
   const [tipoRegistro, setTipoRegistro] = useState("individual");
   const [formEspecie, setFormEspecie] = useState("bovino");
   const [filterEspecie, setFilterEspecie] = useState("all");
+  const [esRecurrente, setEsRecurrente] = useState(false);
+  const [frecuencia, setFrecuencia] = useState("6m");
+  const [intervaloDias, setIntervaloDias] = useState("");
 
   const { data: tratamientos = [], isLoading } = useQuery({ queryKey: ["tratamientos"], queryFn: () => base44.entities.Tratamiento.list("-fecha", 200) });
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
@@ -55,6 +59,11 @@ export default function Tratamientos() {
         if (["costo", "numero_animales"].includes(key)) data[key] = parseFloat(value);
         else data[key] = value;
       }
+    }
+    // Cálculo automático de próxima fecha si es recurrente y no se ingresó manualmente
+    if (esRecurrente && frecuencia !== "no_repite" && !data.proxima_fecha) {
+      const prox = calcularProximaFechaTrat(data.fecha, frecuencia, intervaloDias);
+      if (prox) data.proxima_fecha = prox;
     }
     createMutation.mutate(data);
   };
@@ -252,9 +261,42 @@ export default function Tratamientos() {
               <Label>Costo</Label>
               <Input name="costo" type="number" placeholder="0" />
             </div>
-            <div>
-              <Label>Próxima fecha recomendada</Label>
-              <Input name="proxima_fecha" type="date" />
+            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 space-y-3">
+              <div>
+                <Label className="mb-1.5 block">¿Este tratamiento se repite?</Label>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant={esRecurrente ? "default" : "outline"} onClick={() => setEsRecurrente(true)}>Sí</Button>
+                  <Button type="button" size="sm" variant={!esRecurrente ? "default" : "outline"} onClick={() => setEsRecurrente(false)}>No</Button>
+                </div>
+              </div>
+              {esRecurrente && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Frecuencia</Label>
+                    <Select value={frecuencia} onValueChange={setFrecuencia}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(FRECUENCIA_TRAT_LABELS).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {frecuencia === "personalizado" && (
+                    <div>
+                      <Label className="text-xs">Cada (días)</Label>
+                      <Input type="number" value={intervaloDias} onChange={(e) => setIntervaloDias(e.target.value)} placeholder="Ej: 45" />
+                    </div>
+                  )}
+                </div>
+              )}
+              <div>
+                <Label>Próxima fecha recomendada</Label>
+                <Input name="proxima_fecha" type="date" />
+                {esRecurrente && frecuencia !== "personalizado" && (
+                  <p className="text-xs text-amber-700 mt-1">Se calculará automáticamente si se deja vacía.</p>
+                )}
+              </div>
             </div>
             <div>
               <Label>Responsable</Label>
