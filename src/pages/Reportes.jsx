@@ -242,6 +242,8 @@ export default function Reportes() {
             inconformidades={inconformidades}
             reproductores={reproductores}
             eventos={eventos}
+            fincas={fincas}
+            lotes={filteredLotes}
           />
         </TabsContent>
       </Tabs>
