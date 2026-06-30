@@ -51,6 +51,7 @@ export default function CalendarioIntegral() {
   const { data: pesajes = [] } = useQuery({ queryKey: ["pesajes"], queryFn: () => base44.entities.Pesaje.list() });
   const { data: despachos = [] } = useQuery({ queryKey: ["despachos"], queryFn: () => base44.entities.Despacho.list() });
   const { data: colectas = [] } = useQuery({ queryKey: ["colectas"], queryFn: () => base44.entities.Colecta.list() });
+  const { data: procedimientos = [] } = useQuery({ queryKey: ["procedimientos"], queryFn: () => base44.entities.Procedimiento.list("-fecha", 300) });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: animales = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
@@ -74,13 +75,13 @@ export default function CalendarioIntegral() {
     const events = construirEventos({
       yeguas, inseminaciones, confirmaciones, partos, crias,
       tratamientos, pesajes, despachos, colectas, lotes, fincas, animales,
-      eventosManuales,
+      eventosManuales, procedimientos,
     });
     const today = new Date().toISOString().split("T")[0];
     return events.map((e) =>
       e.estado === "pendiente" && e.fecha < today ? { ...e, estado: "vencido" } : e
     );
-  }, [yeguas, inseminaciones, confirmaciones, partos, crias, tratamientos, pesajes, despachos, colectas, lotes, fincas, animales, eventosManuales]);
+  }, [yeguas, inseminaciones, confirmaciones, partos, crias, tratamientos, pesajes, despachos, colectas, lotes, fincas, animales, eventosManuales, procedimientos]);
 
   // Aplicar filtros
   const eventosFiltrados = useMemo(() => {

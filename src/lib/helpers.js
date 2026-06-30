@@ -85,6 +85,37 @@ export const TIPO_TRATAMIENTO = {
   otro: "Otro",
 };
 
+export const TIPO_PROCEDIMIENTO = {
+  topizado: "Topizado",
+  descorne: "Descorne",
+  tatuaje: "Tatuaje",
+  marcacion_hierro: "Marcación con hierro",
+  chapeta: "Chapeta / Identificación",
+  castracion: "Castración",
+  palpacion: "Palpación",
+  bano: "Baño",
+  pesaje_especial: "Pesaje especial",
+  revision_podal: "Revisión podal",
+  arete: "Arete / Identificación",
+  corte_cola: "Corte de cola",
+  esquila: "Esquila",
+  revision_pezuñas: "Revisión de pezuñas",
+  desparasitacion_externa: "Desparasitación externa",
+  herraje: "Herraje",
+  recorte_cascos: "Recorte de cascos",
+  odontologia: "Odontología",
+  microchip: "Microchip",
+  revision_veterinaria: "Revisión veterinaria",
+  manejo_reproductivo: "Manejo reproductivo",
+  otro: "Otro",
+};
+
+export const PROCEDIMIENTOS_POR_ESPECIE = {
+  bovino: ["topizado", "descorne", "tatuaje", "marcacion_hierro", "chapeta", "castracion", "palpacion", "bano", "pesaje_especial", "revision_podal", "otro"],
+  ovino: ["tatuaje", "arete", "marcacion_hierro", "castracion", "corte_cola", "esquila", "revision_pezuñas", "bano", "desparasitacion_externa", "otro"],
+  equino: ["herraje", "recorte_cascos", "odontologia", "marcacion_hierro", "microchip", "revision_veterinaria", "manejo_reproductivo", "otro"],
+};
+
 export const TIPO_LOTE = {
   levante: "Levante",
   ceba: "Ceba",

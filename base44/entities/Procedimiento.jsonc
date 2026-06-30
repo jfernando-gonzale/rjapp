@@ -1,0 +1,100 @@
+{
+  "name": "Procedimiento",
+  "type": "object",
+  "properties": {
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino"
+      ],
+      "default": "bovino",
+      "description": "Especie del animal o lote"
+    },
+    "tipo_registro": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "lote"
+      ],
+      "default": "individual",
+      "description": "Individual o por lote"
+    },
+    "animal_id": {
+      "type": "string",
+      "description": "ID del animal (individual)"
+    },
+    "finca_id": {
+      "type": "string",
+      "description": "ID de la finca"
+    },
+    "lote_id": {
+      "type": "string",
+      "description": "ID del lote / potrero"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del procedimiento"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "topizado",
+        "descorne",
+        "tatuaje",
+        "marcacion_hierro",
+        "chapeta",
+        "castracion",
+        "palpacion",
+        "bano",
+        "pesaje_especial",
+        "revision_podal",
+        "arete",
+        "corte_cola",
+        "esquila",
+        "revision_pezu\u00f1as",
+        "desparasitacion_externa",
+        "herraje",
+        "recorte_cascos",
+        "odontologia",
+        "microchip",
+        "revision_veterinaria",
+        "manejo_reproductivo",
+        "otro"
+      ],
+      "description": "Tipo de procedimiento / manejo"
+    },
+    "detalle": {
+      "type": "string",
+      "description": "Detalle (n\u00b0 de hierro, microchip, etc.)"
+    },
+    "responsable": {
+      "type": "string",
+      "description": "Persona responsable"
+    },
+    "costo": {
+      "type": "number",
+      "description": "Costo del procedimiento"
+    },
+    "numero_animales": {
+      "type": "number",
+      "description": "N\u00b0 de animales (lote)"
+    },
+    "proxima_fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Pr\u00f3xima revisi\u00f3n recomendada"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones"
+    }
+  },
+  "required": [
+    "especie",
+    "fecha",
+    "tipo"
+  ]
+}

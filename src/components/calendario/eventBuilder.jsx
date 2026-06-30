@@ -1,7 +1,8 @@
 import {
-  Heart, Eye, Baby, GitBranch, Syringe, Scale, Truck, Droplet, Fence, ClipboardList
+  Heart, Eye, Baby, GitBranch, Syringe, Scale, Truck, Droplet, Fence, ClipboardList, Wrench
 } from "lucide-react";
 import { calcFechaDesteteSugerida, ALERTAS_DEFAULT } from "@/lib/caballos";
+import { TIPO_PROCEDIMIENTO } from "@/lib/helpers";
 
 const TIPO_TRATAMIENTO_LABELS = {
   vitamina: "Vitamina",
@@ -19,7 +20,7 @@ const TIPO_TRATAMIENTO_LABELS = {
 export function construirEventos({
   yeguas, inseminaciones, confirmaciones, partos, crias,
   tratamientos, pesajes, despachos, colectas, lotes, fincas, animales,
-  eventosManuales,
+  eventosManuales, procedimientos = [],
 }) {
   const events = [];
 
@@ -193,6 +194,53 @@ export function construirEventos({
         estado: "pendiente",
         origen: "tratamiento",
         origen_id: t.id,
+        es_derivado: true,
+      });
+    }
+  });
+
+  // ===== PROCEDIMIENTOS / MANEJOS (fecha + próxima revisión) =====
+  procedimientos.forEach((p) => {
+    if (!p.fecha) return;
+    const especie = p.especie || animales.find((a) => a.id === p.animal_id)?.especie || "bovino";
+    const sujeto =
+      p.tipo_registro === "lote"
+        ? loteNombre(p.lote_id) || `Lote (${p.numero_animales || 0} animales)`
+        : `#${animalNumero(p.animal_id)}`;
+    const eventoBase = {
+      tipo_evento: "tratamiento",
+      subtipo: p.tipo,
+      especie,
+      finca_id: p.finca_id,
+      lote_id: p.lote_id,
+      animal_id: p.animal_id,
+      finca: fincaNombre(p.finca_id),
+      lote: loteNombre(p.lote_id),
+      animal: animalNumero(p.animal_id),
+      observaciones: p.observaciones,
+      responsable: p.responsable,
+      color: "amber",
+      icon: Wrench,
+    };
+    events.push({
+      ...eventoBase,
+      id: `proc-${p.id}`,
+      titulo: `Procedimiento ${TIPO_PROCEDIMIENTO[p.tipo] || p.tipo}${p.detalle ? `: ${p.detalle}` : ""} - ${sujeto}`,
+      fecha: p.fecha,
+      estado: "completado",
+      origen: "tratamiento",
+      origen_id: p.id,
+      es_derivado: true,
+    });
+    if (p.proxima_fecha && p.proxima_fecha >= today) {
+      events.push({
+        ...eventoBase,
+        id: `proc-prox-${p.id}`,
+        titulo: `Próxima revisión ${TIPO_PROCEDIMIENTO[p.tipo] || p.tipo} - ${sujeto}`,
+        fecha: p.proxima_fecha,
+        estado: "pendiente",
+        origen: "tratamiento",
+        origen_id: p.id,
         es_derivado: true,
       });
     }

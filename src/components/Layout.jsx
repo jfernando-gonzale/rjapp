@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   Home, Scale, Syringe, DollarSign, ShoppingCart, BarChart3,
   Settings, Menu, X, ChevronRight, LogOut, Bell, Truck,
-  Users, MapPin, Layers, Calendar
+  Users, MapPin, Layers, Calendar, ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -96,6 +96,7 @@ const navGroups = [
       { path: "/lotes", label: "Lotes / Potreros", icon: FenceIcon },
       { path: "/pesajes", label: "Pesajes", icon: Scale },
       { path: "/tratamientos", label: "Tratamientos", icon: Syringe },
+      { path: "/procedimientos", label: "Procedimientos", icon: ClipboardList },
       { path: "/reproduccion", label: "Reproducción", icon: ReproIcon },
     ]
   },

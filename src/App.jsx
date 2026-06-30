@@ -30,6 +30,8 @@ import Ventas from '@/pages/Ventas';
 import Clientes from '@/pages/Clientes';
 import Despachos from '@/pages/Despachos';
 import Tratamientos from '@/pages/Tratamientos';
+import Procedimientos from '@/pages/Procedimientos';
+import RegistroMasivo from '@/pages/RegistroMasivo';
 import Reproduccion from '@/pages/Reproduccion';
 import Reportes from '@/pages/Reportes';
 import Configuracion from '@/pages/Configuracion';
@@ -100,6 +102,9 @@ const AuthenticatedApp = () => {
           <Route path="/pesajes/nuevo" element={<PesajeForm />} />
           <Route path="/tratamientos" element={<Tratamientos />} />
           <Route path="/tratamientos/nuevo" element={<Tratamientos />} />
+          <Route path="/procedimientos" element={<Procedimientos />} />
+          <Route path="/procedimientos/nuevo" element={<Procedimientos />} />
+          <Route path="/animales/masivo" element={<RegistroMasivo />} />
           <Route path="/reproduccion" element={<Reproduccion />} />
 
           {/* Comercial */}

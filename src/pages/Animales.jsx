@@ -6,12 +6,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, Plus, Filter, LayoutGrid, LayoutList } from "lucide-react";
+import { Search, Eye, Plus, Filter, LayoutGrid, LayoutList, Layers } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import GainIndicator from "@/components/shared/GainIndicator";
+import CsvExportButton from "@/components/shared/CsvExportButton";
+import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import { formatCurrency, formatWeight, daysBetween, calcDailyGain, ESTADO_ANIMAL, SEXO_ANIMAL } from "@/lib/helpers";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ESPECIE_LABELS = { bovino: "🐄 Bovino", ovino: "🐑 Ovino", equino: "🐴 Equino" };
 const ESPECIE_TERMINOS = {
@@ -30,6 +33,8 @@ export default function Animales() {
   const [filterSexo, setFilterSexo] = useState("all");
   const [viewMode, setViewMode] = useState("cards");
   const [showFilters, setShowFilters] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: animals = [], isLoading } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
@@ -63,6 +68,41 @@ export default function Animales() {
     return map[especie] || "bg-gray-100 text-gray-600";
   };
 
+  const importFields = [
+    { key: "numero", label: "Número / Chapeta", required: true },
+    { key: "especie", label: "Especie (bovino/ovino/equino)" },
+    { key: "sexo", label: "Sexo (macho/hembra)" },
+    { key: "raza", label: "Raza" },
+    { key: "peso_compra", label: "Peso compra (kg)" },
+    { key: "precio_compra", label: "Precio compra" },
+    { key: "fecha_compra", label: "Fecha compra" },
+    { key: "color", label: "Color" },
+    { key: "estado", label: "Estado (activo/vendido/...)" },
+  ];
+
+  const handleImportAnimals = async (rows) => {
+    const defaultFinca = fincas[0]?.id;
+    const existentes = new Set(animals.map((a) => `${a.numero}|${a.especie || "bovino"}`));
+    const nuevos = [];
+    const duplicados = [];
+    rows.forEach((r) => {
+      const esp = r.especie || "bovino";
+      const key = `${r.numero}|${esp}`;
+      if (existentes.has(key)) { duplicados.push(r.numero); return; }
+      nuevos.push({
+        numero: r.numero, especie: esp, finca_id: defaultFinca,
+        sexo: r.sexo || undefined, raza: r.raza || undefined, color: r.color || undefined,
+        estado: r.estado || "activo", peso_compra: parseFloat(r.peso_compra) || undefined,
+        precio_compra: parseFloat(r.precio_compra) || undefined, fecha_compra: r.fecha_compra || undefined,
+      });
+    });
+    if (nuevos.length > 0) await base44.entities.Animal.bulkCreate(nuevos);
+    queryClient.invalidateQueries({ queryKey: ["animals"] });
+    if (duplicados.length > 0) {
+      alert(`Importación completada: ${nuevos.length} animales creados. Se ignoraron ${duplicados.length} duplicados: ${duplicados.slice(0, 10).join(", ")}`);
+    }
+  };
+
   return (
     <div>
       <PageHeader title="Animales" subtitle={`${filtered.length} de ${animals.length} animales`}>
@@ -78,6 +118,21 @@ export default function Animales() {
               <LayoutList className="w-4 h-4" />
             </button>
           </div>
+          <CsvExportButton
+            data={filtered}
+            filename="animales"
+            columns={[
+              { key: "numero", label: "Número" }, { key: "especie", label: "Especie" }, { key: "nombre", label: "Nombre" },
+              { key: "sexo", label: "Sexo" }, { key: "raza", label: "Raza" }, { key: "color", label: "Color" },
+              { key: "estado", label: "Estado" }, { key: "ultimo_peso", label: "Último peso" },
+              { key: "peso_compra", label: "Peso compra" }, { key: "precio_compra", label: "Precio compra" },
+              { key: "fecha_compra", label: "Fecha compra" }, { key: "fecha_nacimiento", label: "Fecha nacimiento" },
+            ]}
+          />
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="gap-2 h-8"><Layers className="w-4 h-4" /> Importar</Button>
+          <Link to="/animales/masivo">
+            <Button variant="outline" size="sm" className="gap-2 h-8"><Plus className="w-4 h-4" /> Masivo</Button>
+          </Link>
           <Link to="/animales/nuevo">
             <Button className="gap-2 font-medium"><Plus className="w-4 h-4" /> Nuevo Animal</Button>
           </Link>
@@ -235,6 +290,14 @@ export default function Animales() {
           </table>
         </div>
       )}
+
+      <ImportCsvDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        fields={importFields}
+        onImport={handleImportAnimals}
+        entityLabel="animales"
+      />
     </div>
   );
 }

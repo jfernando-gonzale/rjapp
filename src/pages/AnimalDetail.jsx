@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil, Weight, Syringe, DollarSign, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Pencil, Weight, Syringe, DollarSign, ShoppingCart, ClipboardList, Download } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import GainIndicator from "@/components/shared/GainIndicator";
-import { formatCurrency, formatWeight, daysBetween, calcDailyGain, ESTADO_ANIMAL, SEXO_ANIMAL, TIPO_TRATAMIENTO, CATEGORIA_GASTOS } from "@/lib/helpers";
+import { formatCurrency, formatWeight, daysBetween, calcDailyGain, ESTADO_ANIMAL, SEXO_ANIMAL, TIPO_TRATAMIENTO, TIPO_PROCEDIMIENTO, CATEGORIA_GASTOS } from "@/lib/helpers";
+import { exportToCsv } from "@/lib/csv";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -30,6 +31,11 @@ export default function AnimalDetail() {
   const { data: tratamientos = [] } = useQuery({
     queryKey: ["tratamientos-animal", id],
     queryFn: () => base44.entities.Tratamiento.filter({ animal_id: id }),
+  });
+
+  const { data: procedimientos = [] } = useQuery({
+    queryKey: ["procedimientos-animal", id],
+    queryFn: () => base44.entities.Procedimiento.filter({ animal_id: id }),
   });
 
   const { data: gastos = [] } = useQuery({
@@ -97,9 +103,19 @@ export default function AnimalDetail() {
             {getFincaName(animal.finca_id)} • {getLoteName(animal.lote_id)} • {SEXO_ANIMAL[animal.sexo] || "—"} • {animal.raza || "—"}
           </p>
         </div>
-        <Link to={`/animales/${id}/editar`}>
-          <Button variant="outline" className="gap-2"><Pencil className="w-4 h-4" /> Editar</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => exportToCsv(`hoja-vida-${animal.numero || id}.csv`, [{
+            numero: animal.numero, especie: animal.especie, nombre: animal.nombre, sexo: animal.sexo, raza: animal.raza, color: animal.color,
+            finca: getFincaName(animal.finca_id), lote: getLoteName(animal.lote_id), estado: animal.estado,
+            fecha_nacimiento: animal.fecha_nacimiento, peso_compra: animal.peso_compra, ultimo_peso: animal.ultimo_peso,
+            fecha_compra: animal.fecha_compra, precio_compra: animal.precio_compra, costo_acumulado: costoTotal,
+            tratamientos: tratamientos.length, procedimientos: procedimientos.length, pesajes: pesajes.length,
+            gastos: totalGastos,
+          }])}><Download className="w-4 h-4" /> Exportar</Button>
+          <Link to={`/animales/${id}/editar`}>
+            <Button variant="outline" className="gap-2"><Pencil className="w-4 h-4" /> Editar</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -127,12 +143,15 @@ export default function AnimalDetail() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-6">
         <Link to={`/pesajes/nuevo?animal=${id}`}>
           <Button variant="outline" className="w-full gap-2 h-12"><Weight className="w-4 h-4" /> Pesar</Button>
         </Link>
         <Link to={`/tratamientos/nuevo?animal=${id}`}>
           <Button variant="outline" className="w-full gap-2 h-12"><Syringe className="w-4 h-4" /> Tratamiento</Button>
+        </Link>
+        <Link to={`/procedimientos/nuevo?animal=${id}`}>
+          <Button variant="outline" className="w-full gap-2 h-12"><ClipboardList className="w-4 h-4" /> Proced.</Button>
         </Link>
         <Link to={`/gastos/nuevo?animal=${id}`}>
           <Button variant="outline" className="w-full gap-2 h-12"><DollarSign className="w-4 h-4" /> Gasto</Button>
@@ -201,6 +220,26 @@ export default function AnimalDetail() {
                   <p className="text-xs text-muted-foreground">{t.producto || "—"} • {format(new Date(t.fecha), "dd MMM yyyy", { locale: es })}</p>
                 </div>
                 {t.costo > 0 && <p className="text-sm font-medium">{formatCurrency(t.costo)}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Procedures History */}
+      <Card className="p-4 mb-6">
+        <h3 className="font-heading font-semibold mb-3">Procedimientos / Manejos ({procedimientos.length})</h3>
+        {procedimientos.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">Sin procedimientos registrados</p>
+        ) : (
+          <div className="space-y-2">
+            {procedimientos.map(p => (
+              <div key={p.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div>
+                  <p className="font-medium">{TIPO_PROCEDIMIENTO[p.tipo] || p.tipo}{p.detalle ? ` (${p.detalle})` : ""}</p>
+                  <p className="text-xs text-muted-foreground">{format(new Date(p.fecha), "dd MMM yyyy", { locale: es })}{p.responsable ? ` • ${p.responsable}` : ""}</p>
+                </div>
+                {p.costo > 0 && <p className="text-sm font-medium">{formatCurrency(p.costo)}</p>}
               </div>
             ))}
           </div>
