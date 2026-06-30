@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { DollarSign, Plus } from "lucide-react";
+import { DollarSign, Plus, Layers } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import { formatCurrency, CATEGORIA_GASTOS } from "@/lib/helpers";
+import CsvExportButton from "@/components/shared/CsvExportButton";
+import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -35,6 +37,7 @@ export default function Gastos() {
   const [filterCat, setFilterCat] = useState("all");
   const [filterFinca, setFilterFinca] = useState("all");
   const [filterEspecie, setFilterEspecie] = useState("all");
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: gastos = [], isLoading } = useQuery({ queryKey: ["gastos"], queryFn: () => base44.entities.Gasto.list("-fecha", 200) });
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
@@ -65,9 +68,25 @@ export default function Gastos() {
     createMutation.mutate(data);
   };
 
+  const handleImportGastos = async (rows) => {
+    const nuevos = rows.map((r) => ({
+      fecha: r.fecha, valor: parseFloat(r.valor) || 0,
+      categoria: r.categoria || "otros", especie: r.especie || "general",
+      descripcion: r.descripcion, tipo_gasto: r.tipo_gasto || "general",
+    })).filter((r) => r.fecha && r.valor);
+    if (nuevos.length) await base44.entities.Gasto.bulkCreate(nuevos);
+    queryClient.invalidateQueries({ queryKey: ["gastos"] });
+  };
+
   return (
     <div>
       <PageHeader title="Gastos" subtitle={`Total filtrado: ${formatCurrency(totalFiltered)}`}>
+        <CsvExportButton data={filtered} filename="gastos" columns={[
+          { key: "fecha", label: "Fecha" }, { key: "especie", label: "Especie" },
+          { key: "categoria", label: "Categoría" }, { key: "descripcion", label: "Descripción" },
+          { key: "valor", label: "Valor" }, { key: "tipo_gasto", label: "Tipo" },
+        ]} />
+        <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => setImportOpen(true)}><Layers className="w-4 h-4" /> Importar</Button>
         <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="w-4 h-4" /> Nuevo Gasto</Button>
       </PageHeader>
 
@@ -225,6 +244,15 @@ export default function Gastos() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} fields={[
+        { key: "fecha", label: "Fecha (YYYY-MM-DD)", required: true },
+        { key: "valor", label: "Valor", required: true },
+        { key: "categoria", label: "Categoría" },
+        { key: "especie", label: "Especie" },
+        { key: "descripcion", label: "Descripción" },
+        { key: "tipo_gasto", label: "Tipo gasto" },
+      ]} onImport={handleImportGastos} entityLabel="gastos" />
     </div>
   );
 }

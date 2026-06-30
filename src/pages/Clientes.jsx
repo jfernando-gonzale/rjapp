@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, Phone, MapPin, User } from "lucide-react";
+import { Plus, Search, Phone, MapPin, User, Layers } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { TIPO_CLIENTE } from "@/lib/helpers";
+import CsvExportButton from "@/components/shared/CsvExportButton";
+import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import DepartamentoMunicipioFields from "@/components/shared/DepartamentoMunicipioFields";
 
 const TIPO_COLORS = {
@@ -32,6 +34,7 @@ export default function Clientes() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -59,11 +62,29 @@ export default function Clientes() {
   }), [clientes, filterTipo, search]);
 
   const openNew = () => { setForm(emptyForm); setEditing(null); setOpen(true); };
+
+  const handleImportClientes = async (rows) => {
+    const existentes = new Set(clientes.map((c) => (c.nombre || "").toLowerCase()));
+    const nuevos = rows.filter((r) => r.nombre && !existentes.has(r.nombre.toLowerCase())).map((r) => ({
+      nombre: r.nombre, telefono: r.telefono, ciudad: r.ciudad,
+      departamento: r.departamento, finca_criadero: r.finca_criadero,
+      tipo_cliente: r.tipo_cliente || "general",
+    }));
+    if (nuevos.length) await base44.entities.Cliente.bulkCreate(nuevos);
+    qc.invalidateQueries({ queryKey: ["clientes"] });
+  };
   const openEdit = (c) => { setForm({ ...c }); setEditing(c.id); setOpen(true); };
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Clientes" subtitle="Gestión de clientes por línea de negocio" actionLabel="Nuevo Cliente" onAction={openNew} />
+      <PageHeader title="Clientes" subtitle="Gestión de clientes por línea de negocio" actionLabel="Nuevo Cliente" onAction={openNew}>
+        <CsvExportButton data={filtered} filename="clientes" columns={[
+          { key: "nombre", label: "Nombre" }, { key: "telefono", label: "Teléfono" },
+          { key: "ciudad", label: "Ciudad" }, { key: "departamento", label: "Departamento" },
+          { key: "finca_criadero", label: "Finca/Criadero" }, { key: "tipo_cliente", label: "Tipo" },
+        ]} />
+        <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => setImportOpen(true)}><Layers className="w-4 h-4" /> Importar</Button>
+      </PageHeader>
 
       {/* Filtro por tipo */}
       <div className="flex gap-2 flex-wrap">
@@ -183,6 +204,15 @@ export default function Clientes() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} fields={[
+        { key: "nombre", label: "Nombre", required: true },
+        { key: "telefono", label: "Teléfono" },
+        { key: "ciudad", label: "Ciudad" },
+        { key: "departamento", label: "Departamento" },
+        { key: "finca_criadero", label: "Finca/Criadero" },
+        { key: "tipo_cliente", label: "Tipo cliente" },
+      ]} onImport={handleImportClientes} entityLabel="clientes" />
     </div>
   );
 }

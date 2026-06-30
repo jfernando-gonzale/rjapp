@@ -34,6 +34,7 @@ import Procedimientos from '@/pages/Procedimientos';
 import RegistroMasivo from '@/pages/RegistroMasivo';
 import Reproduccion from '@/pages/Reproduccion';
 import Reportes from '@/pages/Reportes';
+import Proformas from '@/pages/Proformas';
 import Configuracion from '@/pages/Configuracion';
 
 // Reproductores equinos
@@ -112,6 +113,7 @@ const AuthenticatedApp = () => {
           <Route path="/gastos/nuevo" element={<Gastos />} />
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/ventas/nueva" element={<Ventas />} />
+          <Route path="/proformas" element={<Proformas />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/despachos" element={<Despachos />} />
 

@@ -1,15 +1,17 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Weight, Plus } from "lucide-react";
+import { Weight, Plus, Layers } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import GainIndicator from "@/components/shared/GainIndicator";
 import { formatWeight } from "@/lib/helpers";
+import CsvExportButton from "@/components/shared/CsvExportButton";
+import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -24,6 +26,8 @@ export default function Pesajes() {
   const [filterEspecie, setFilterEspecie] = useState("all");
   const [filterFinca, setFilterFinca] = useState("all");
   const [filterLote, setFilterLote] = useState("all");
+  const queryClient = useQueryClient();
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: pesajes = [], isLoading } = useQuery({ queryKey: ["pesajes"], queryFn: () => base44.entities.Pesaje.list("-fecha", 200) });
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
@@ -49,9 +53,30 @@ export default function Pesajes() {
     return true;
   }), [pesajes, filterFinca, filterLote, filterEspecie, animalMap]);
 
+  const handleImportPesajes = async (rows) => {
+    const numeroToId = {};
+    animals.forEach((a) => { numeroToId[String(a.numero)] = a; });
+    const nuevos = rows.map((r) => {
+      const a = numeroToId[String(r.animal_numero)];
+      if (!a) return null;
+      return { animal_id: a.id, finca_id: a.finca_id, fecha: r.fecha, peso: parseFloat(r.peso) || 0 };
+    }).filter(Boolean);
+    if (nuevos.length) await base44.entities.Pesaje.bulkCreate(nuevos);
+    queryClient.invalidateQueries({ queryKey: ["pesajes"] });
+  };
+
   return (
     <div>
       <PageHeader title="Pesajes" subtitle={`${filtered.length} registros`}>
+        <CsvExportButton data={filtered.map((p) => ({
+          fecha: p.fecha, animal: animalMap[p.animal_id]?.numero || "",
+          peso: p.peso, diferencia: p.diferencia_peso, ganancia_diaria: p.ganancia_diaria,
+        }))} filename="pesajes" columns={[
+          { key: "fecha", label: "Fecha" }, { key: "animal", label: "N° Animal" },
+          { key: "peso", label: "Peso (kg)" }, { key: "diferencia", label: "Diferencia (kg)" },
+          { key: "ganancia_diaria", label: "Ganancia diaria" },
+        ]} />
+        <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => setImportOpen(true)}><Layers className="w-4 h-4" /> Importar</Button>
         <Link to="/pesajes/nuevo">
           <Button className="gap-2"><Plus className="w-4 h-4" /> Nuevo Pesaje</Button>
         </Link>
@@ -134,6 +159,12 @@ export default function Pesajes() {
           })}
         </div>
       )}
+
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} fields={[
+        { key: "fecha", label: "Fecha (YYYY-MM-DD)", required: true },
+        { key: "animal_numero", label: "N° Animal", required: true },
+        { key: "peso", label: "Peso (kg)", required: true },
+      ]} onImport={handleImportPesajes} entityLabel="pesajes" />
     </div>
   );
 }

@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { ShoppingCart, Plus } from "lucide-react";
+import { ShoppingCart, Plus, Layers } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import { formatCurrency, formatWeight, TIPO_VENTA } from "@/lib/helpers";
+import CsvExportButton from "@/components/shared/CsvExportButton";
+import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -37,6 +39,7 @@ export default function Ventas() {
   const [pesoVenta, setPesoVenta] = useState("");
   const [precioKilo, setPrecioKilo] = useState("");
   const [precioTotal, setPrecioTotal] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: ventas = [], isLoading } = useQuery({ queryKey: ["ventas"], queryFn: () => base44.entities.Venta.list("-fecha", 200) });
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
@@ -82,6 +85,17 @@ export default function Ventas() {
     createMutation.mutate(data);
   };
 
+  const handleImportVentas = async (rows) => {
+    const nuevos = rows.map((r) => ({
+      fecha: r.fecha, especie: r.especie || "bovino", comprador: r.comprador,
+      peso_venta: parseFloat(r.peso_venta) || undefined,
+      precio_kilo: parseFloat(r.precio_kilo) || undefined,
+      precio_total: parseFloat(r.precio_total) || undefined,
+    })).filter((r) => r.fecha && r.especie);
+    if (nuevos.length) await base44.entities.Venta.bulkCreate(nuevos);
+    queryClient.invalidateQueries({ queryKey: ["ventas"] });
+  };
+
   const filtered = useMemo(() => ventas.filter(v => {
     if (filterEspecie !== "all" && v.especie !== filterEspecie) return false;
     return true;
@@ -94,6 +108,13 @@ export default function Ventas() {
   return (
     <div>
       <PageHeader title="Ventas" subtitle={`Total: ${formatCurrency(totalVentas)}`}>
+        <CsvExportButton data={filtered} filename="ventas" columns={[
+          { key: "fecha", label: "Fecha" }, { key: "especie", label: "Especie/Tipo" },
+          { key: "comprador", label: "Comprador" }, { key: "peso_venta", label: "Peso (kg)" },
+          { key: "precio_kilo", label: "Precio/kilo" }, { key: "precio_total", label: "Total" },
+          { key: "costo_transporte", label: "Transporte" }, { key: "comision", label: "Comisión" },
+        ]} />
+        <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => setImportOpen(true)}><Layers className="w-4 h-4" /> Importar</Button>
         <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="w-4 h-4" /> Nueva Venta</Button>
       </PageHeader>
 
@@ -221,6 +242,15 @@ export default function Ventas() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} fields={[
+        { key: "fecha", label: "Fecha (YYYY-MM-DD)", required: true },
+        { key: "especie", label: "Especie (bovino/ovino/equino)", required: true },
+        { key: "comprador", label: "Comprador" },
+        { key: "peso_venta", label: "Peso venta (kg)" },
+        { key: "precio_kilo", label: "Precio/kilo" },
+        { key: "precio_total", label: "Precio total" },
+      ]} onImport={handleImportVentas} entityLabel="ventas" />
     </div>
   );
 }
