@@ -16,8 +16,6 @@ export default function Configuracion() {
     currency: "COP",
     weight_unit: "kg",
     weighing_frequency_days: 30,
-    good_gain_threshold: 0.8,
-    medium_gain_threshold: 0.4,
     umbrales_productivos: {
       bovino: { excelente: 0.80, bueno: 0.50, regular: 0.25, bajo: 0.01 },
       ovino: { excelente: 0.25, bueno: 0.15, regular: 0.08, bajo: 0.01 },
@@ -44,8 +42,6 @@ export default function Configuracion() {
         currency: user.currency || "COP",
         weight_unit: user.weight_unit || "kg",
         weighing_frequency_days: user.weighing_frequency_days || 30,
-        good_gain_threshold: user.good_gain_threshold || 0.8,
-        medium_gain_threshold: user.medium_gain_threshold || 0.4,
         umbrales_productivos: { ...umb },
       });
     }
@@ -64,8 +60,6 @@ export default function Configuracion() {
       ...formData,
       umbrales_productivos: JSON.stringify(formData.umbrales_productivos),
       weighing_frequency_days: parseInt(formData.weighing_frequency_days),
-      good_gain_threshold: parseFloat(formData.good_gain_threshold),
-      medium_gain_threshold: parseFloat(formData.medium_gain_threshold),
     });
   };
 
@@ -81,7 +75,7 @@ export default function Configuracion() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <PageHeader title="Configuración" subtitle="Personaliza tu libreta ganadera" />
+      <PageHeader title="Configuración" subtitle="Personaliza tu cuenta RJAPP" />
 
       <Card className="p-5 space-y-5 mb-4">
         <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">General</h2>
@@ -132,24 +126,6 @@ export default function Configuracion() {
             </SelectContent>
           </Select>
         </div>
-      </Card>
-
-      <Card className="p-5 space-y-5 mb-4">
-        <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Indicadores de rendimiento</h2>
-        <p className="text-sm text-muted-foreground">Define los rangos para clasificar la ganancia diaria de peso.</p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-emerald-600">Buena ganancia (≥ kg/día)</Label>
-            <Input type="number" step="0.1" value={formData.good_gain_threshold} onChange={(e) => setFormData({ ...formData, good_gain_threshold: e.target.value })} />
-          </div>
-          <div>
-            <Label className="text-amber-600">Ganancia media (≥ kg/día)</Label>
-            <Input type="number" step="0.1" value={formData.medium_gain_threshold} onChange={(e) => setFormData({ ...formData, medium_gain_threshold: e.target.value })} />
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Por debajo de {formData.medium_gain_threshold} kg/día se considera baja ganancia (indicador rojo).
-        </p>
       </Card>
 
       <Card className="p-5 space-y-4 mb-4">

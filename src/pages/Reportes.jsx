@@ -19,6 +19,8 @@ export default function Reportes() {
   const [filterEspecie, setFilterEspecie] = useState("all");
   const [filterFinca, setFilterFinca] = useState("all");
   const [filterLote, setFilterLote] = useState("all");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
 
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
@@ -52,15 +54,19 @@ export default function Reportes() {
     if (filterEspecie !== "all" && g.especie && g.especie !== filterEspecie && g.especie !== "general") return false;
     if (filterFinca !== "all" && g.finca_id !== filterFinca) return false;
     if (filterLote !== "all" && g.lote_id !== filterLote) return false;
+    if (fechaDesde && g.fecha < fechaDesde) return false;
+    if (fechaHasta && g.fecha > fechaHasta) return false;
     return true;
-  }), [gastos, filterEspecie, filterFinca, filterLote]);
+  }), [gastos, filterEspecie, filterFinca, filterLote, fechaDesde, fechaHasta]);
 
   const filteredVentas = useMemo(() => ventas.filter(v => {
     if (filterEspecie !== "all" && v.especie && v.especie !== filterEspecie) return false;
     if (filterFinca !== "all" && v.finca_id !== filterFinca) return false;
     if (filterLote !== "all" && v.lote_id !== filterLote) return false;
+    if (fechaDesde && v.fecha < fechaDesde) return false;
+    if (fechaHasta && v.fecha > fechaHasta) return false;
     return true;
-  }), [ventas, filterEspecie, filterFinca, filterLote]);
+  }), [ventas, filterEspecie, filterFinca, filterLote, fechaDesde, fechaHasta]);
 
   const activeAnimals = filteredAnimals.filter(a => a.estado === "activo");
   const withWeight = activeAnimals.filter(a => a.ultimo_peso);
@@ -110,7 +116,7 @@ export default function Reportes() {
         ))}
       </div>
 
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="flex gap-2 mb-6 flex-wrap items-center">
         <Select value={filterFinca} onValueChange={(v) => { setFilterFinca(v); setFilterLote("all"); }}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Finca" /></SelectTrigger>
           <SelectContent>
@@ -125,6 +131,16 @@ export default function Reportes() {
             {filteredLotes.map(l => <SelectItem key={l.id} value={l.id}>{l.nombre}</SelectItem>)}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-1.5">
+          <input type="date" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm" placeholder="Desde" />
+          <span className="text-xs text-muted-foreground">→</span>
+          <input type="date" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm" placeholder="Hasta" />
+        </div>
+        {(fechaDesde || fechaHasta) && (
+          <button onClick={() => { setFechaDesde(""); setFechaHasta(""); }} className="text-xs text-destructive hover:underline font-medium">
+            Limpiar fechas
+          </button>
+        )}
       </div>
 
       {/* Summary Stats */}
@@ -209,6 +225,7 @@ export default function Reportes() {
             fincaFilter={filterFinca}
             loteFilter={filterLote}
             thresholds={thresholds}
+            lotes={lotes}
           />
         </TabsContent>
 

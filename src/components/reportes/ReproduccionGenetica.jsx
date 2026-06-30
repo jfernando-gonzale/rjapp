@@ -58,7 +58,7 @@ function BovinosRepro({ animals, eventos, today }) {
         <StatCard icon={Users} label="Hembras reproductivas" value={hembras.length} sub="Activas" color="emerald" />
         <StatCard icon={Heart} label="Hembras preñadas" value={preñadas.length} sub={`Tasa preñez: ${tasaPreñez}%`} color="purple" />
         <StatCard icon={AlertCircle} label="Hembras vacías" value={vacias} sub="Sin preñez confirmada" color="amber" />
-        <StatCard icon={Activity} label="Días abiertos prom." value="—" sub="Sin datos de partos" color="gray" />
+        <StatCard icon={Activity} label="Días abiertos prom." value="Sin datos" sub="Sin partos registrados" color="gray" />
         <StatCard icon={Baby} label="Partos próximos" value={partosProx.length} sub="Próximos eventos" color="blue" />
         <StatCard icon={Baby} label="Destetes próximos" value={destetesProx.length} sub="Próximos eventos" color="amber" />
         <StatCard icon={Baby} label="Terneros nacidos" value={terneros.length} sub="Este año" color="emerald" />
@@ -89,7 +89,7 @@ function OvinosRepro({ animals, eventos, today }) {
   const preñadas = ovejas.filter(h => eventos.some(ev => ev.animal_id === h.id && ev.tipo_evento === "reproduccion" && ev.subtipo === "confirmacion_preñez"));
   const partosProx = eventos.filter(ev => ev.especie === "ovino" && ev.tipo_evento === "reproduccion" && ev.subtipo === "parto" && ev.fecha >= today);
   const tasaPreñez = ovejas.length > 0 ? Math.round((preñadas.length / ovejas.length) * 100) : 0;
-  const prolificidad = corderos.length > 0 && preñadas.length > 0 ? (corderos.length / preñadas.length).toFixed(1) : "—";
+  const prolificidad = corderos.length > 0 && preñadas.length > 0 ? (corderos.length / preñadas.length).toFixed(1) : "Sin datos";
   const mortalidad = (corderos.length + corderosMuertos.length) > 0 ? Math.round((corderosMuertos.length / (corderos.length + corderosMuertos.length)) * 100) : 0;
 
   return (
@@ -102,7 +102,7 @@ function OvinosRepro({ animals, eventos, today }) {
         <StatCard icon={Baby} label="Corderos nacidos" value={corderos.length} sub="Este año" color="emerald" />
         <StatCard icon={AlertTriangle} label="Mortalidad corderos" value={`${mortalidad}%`} sub={`${corderosMuertos.length} muertos`} color="red" />
         <StatCard icon={Baby} label="Partos próximos" value={partosProx.length} sub="Próximos" color="blue" />
-        <StatCard icon={Activity} label="Días abiertos prom." value="—" sub="Sin datos suficientes" color="gray" />
+        <StatCard icon={Activity} label="Días abiertos prom." value="Sin datos" sub="Sin partos registrados" color="gray" />
       </div>
       <Card className="p-4">
         <h3 className="font-heading font-semibold mb-3">Ovejas por revisar</h3>

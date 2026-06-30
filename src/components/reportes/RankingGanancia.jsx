@@ -36,8 +36,23 @@ function Row({ entry, rank, accent }) {
   );
 }
 
-export default function RankingGanancia({ animals, pesajes, especieFilter, fincaFilter, loteFilter, thresholds }) {
+export default function RankingGanancia({ animals, pesajes, especieFilter, fincaFilter, loteFilter, thresholds, lotes = [] }) {
   const [includeInactive, setIncludeInactive] = useState(false);
+  const [includeAdults, setIncludeAdults] = useState(false);
+
+  const loteMap = useMemo(() => {
+    const m = {};
+    lotes.forEach(l => { m[l.id] = l; });
+    return m;
+  }, [lotes]);
+
+  const isAdultBreeder = (a) => {
+    const esp = a.especie || "bovino";
+    if (esp !== "ovino") return false;
+    const lote = loteMap[a.lote_id];
+    if (lote && (lote.tipo === "cria" || lote.tipo === "reproduccion")) return true;
+    return false;
+  };
 
   const animalGains = useMemo(() => {
     const pesajesByAnimal = {};
@@ -54,6 +69,7 @@ export default function RankingGanancia({ animals, pesajes, especieFilter, finca
         if (loteFilter !== "all" && a.lote_id !== loteFilter) return false;
         const esp = a.especie || "bovino";
         if (esp === "equino" && !isPotro(a)) return false;
+        if (esp === "ovino" && !includeAdults && isAdultBreeder(a)) return false;
         return true;
       })
       .map(a => {
@@ -72,7 +88,7 @@ export default function RankingGanancia({ animals, pesajes, especieFilter, finca
       })
       .filter(Boolean)
       .sort((a, b) => b.gain - a.gain);
-  }, [animals, pesajes, especieFilter, fincaFilter, loteFilter, includeInactive, thresholds]);
+  }, [animals, pesajes, especieFilter, fincaFilter, loteFilter, includeInactive, includeAdults, thresholds, loteMap]);
 
   if (animalGains.length === 0) {
     return (
@@ -86,13 +102,28 @@ export default function RankingGanancia({ animals, pesajes, especieFilter, finca
   if (animalGains.length < 6) {
     return (
       <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h3 className="font-heading font-semibold">Ranking de ganancia diaria</h3>
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
-            <input type="checkbox" checked={includeInactive} onChange={e => setIncludeInactive(e.target.checked)} className="rounded" />
-            Incluir no activos
-          </label>
+          <div className="flex items-center gap-3">
+            {especieFilter === "ovino" && (
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                <input type="checkbox" checked={includeAdults} onChange={e => setIncludeAdults(e.target.checked)} className="rounded" />
+                Incluir adultos reproductores
+              </label>
+            )}
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+              <input type="checkbox" checked={includeInactive} onChange={e => setIncludeInactive(e.target.checked)} className="rounded" />
+              Incluir no activos
+            </label>
+          </div>
         </div>
+        {especieFilter === "ovino" && includeAdults && (
+          <div className="mb-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-xs text-amber-800">
+              En ovinos adultos reproductivos, la ganancia diaria no siempre es el principal indicador productivo. Para reproductoras, revisar indicadores de crías, prolificidad, días abiertos e intervalo entre partos.
+            </p>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -136,12 +167,25 @@ export default function RankingGanancia({ animals, pesajes, especieFilter, finca
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-3 flex-wrap">
+        {especieFilter === "ovino" && (
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={includeAdults} onChange={e => setIncludeAdults(e.target.checked)} className="rounded" />
+            Incluir adultos reproductores
+          </label>
+        )}
         <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
           <input type="checkbox" checked={includeInactive} onChange={e => setIncludeInactive(e.target.checked)} className="rounded" />
           Incluir animales no activos
         </label>
       </div>
+      {especieFilter === "ovino" && includeAdults && (
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-xs text-amber-800">
+            En ovinos adultos reproductivos, la ganancia diaria no siempre es el principal indicador productivo. Para reproductoras, revisar indicadores de crías, prolificidad, días abiertos e intervalo entre partos.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4">
           <h3 className="font-heading font-semibold mb-3 text-emerald-600 flex items-center gap-2">

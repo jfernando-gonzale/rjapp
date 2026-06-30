@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, Weight, Syringe, DollarSign, ShoppingCart, ClipboardList, Download } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import GainIndicator from "@/components/shared/GainIndicator";
-import { formatCurrency, formatWeight, daysBetween, calcDailyGain, ESTADO_ANIMAL, SEXO_ANIMAL, TIPO_TRATAMIENTO, TIPO_PROCEDIMIENTO, CATEGORIA_GASTOS } from "@/lib/helpers";
+import { formatCurrency, formatWeight, ESTADO_ANIMAL, SEXO_ANIMAL, TIPO_TRATAMIENTO, TIPO_PROCEDIMIENTO, CATEGORIA_GASTOS } from "@/lib/helpers";
 import { exportToCsv } from "@/lib/csv";
+import { calcGainFromPesajes, classifyGain, getThresholds, isPotro } from "@/lib/gananciaUtils";
+import { getTerminologia } from "@/lib/reproduccion";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -50,6 +52,22 @@ export default function AnimalDetail() {
 
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
+  const { data: user } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
+  const thresholds = getThresholds(user);
+
+  // Historial reproductivo (entidades usan yegua_id para todas las especies)
+  const { data: inseminaciones = [] } = useQuery({
+    queryKey: ["inseminaciones-animal", id],
+    queryFn: () => base44.entities.Inseminacion.filter({ yegua_id: id }),
+  });
+  const { data: confirmacionesRepro = [] } = useQuery({
+    queryKey: ["confirmaciones-animal", id],
+    queryFn: () => base44.entities.ConfirmacionPreñez.filter({ yegua_id: id }),
+  });
+  const { data: partosRepro = [] } = useQuery({
+    queryKey: ["partos-animal", id],
+    queryFn: () => base44.entities.Parto.filter({ yegua_id: id }),
+  });
 
   if (isLoading || !animal) {
     return (
@@ -71,10 +89,11 @@ export default function AnimalDetail() {
   const utilidadNeta = venta ? (venta.precio_total || 0) - costoTotal - (venta.costo_transporte || 0) - (venta.comision || 0) - (venta.otros_descuentos || 0) : null;
   const rentabilidad = utilidadNeta != null && costoTotal > 0 ? (utilidadNeta / costoTotal) * 100 : null;
 
-  // Daily gain from purchase
-  const gainFromPurchase = animal.ultimo_peso && animal.peso_compra && animal.fecha_compra && animal.fecha_ultimo_pesaje
-    ? calcDailyGain(animal.ultimo_peso, animal.peso_compra, daysBetween(animal.fecha_compra, animal.fecha_ultimo_pesaje))
-    : null;
+  // Daily gain from last 2 pesajes (misma lógica que Reportes / RankingGanancia)
+  const especie = animal.especie || "bovino";
+  const gainInfo = calcGainFromPesajes(sortedPesajes);
+  const gainClassification = gainInfo ? classifyGain(gainInfo.gain, especie, thresholds) : null;
+  const showGain = especie !== "equino" || isPotro(animal);
 
   // Chart data
   const chartData = sortedPesajes.map(p => ({
@@ -129,10 +148,14 @@ export default function AnimalDetail() {
           <p className="text-xs text-muted-foreground">Peso inicial</p>
         </Card>
         <Card className="p-4 text-center">
-          {gainFromPurchase != null ? (
-            <GainIndicator dailyGain={gainFromPurchase} size="lg" />
+          {showGain && gainInfo ? (
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${gainClassification.bg} ${gainClassification.text}`}>
+              <span className={`w-2 h-2 rounded-full ${gainClassification.dot}`} />
+              {gainInfo.gain.toFixed(2)} kg/día
+              <span className="opacity-70">· {gainClassification.label}</span>
+            </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Sin datos</p>
+            <p className="text-sm text-muted-foreground">{!showGain ? "N/A adultos" : "Sin datos"}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">Ganancia diaria</p>
         </Card>
@@ -245,6 +268,87 @@ export default function AnimalDetail() {
           </div>
         )}
       </Card>
+
+      {/* Historial reproductivo */}
+      {(() => {
+        const T = getTerminologia(especie);
+        const criaLabel = (sexo) => {
+          if (sexo === "macho") return T.criaSingular || "Cría";
+          if (sexo === "hembra") return T.criaSingularHembra || "Cría";
+          return "Cría";
+        };
+        const hasRepro = inseminaciones.length > 0 || confirmacionesRepro.length > 0 || partosRepro.length > 0;
+        return (
+          <Card className="p-4 mb-6">
+            <h3 className="font-heading font-semibold mb-3">Historial reproductivo</h3>
+            {!hasRepro ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Sin historial reproductivo registrado.</p>
+            ) : (
+              <div className="space-y-3">
+                {inseminaciones.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                      {especie === "ovino" ? "Servicios / Montas" : "Inseminaciones / Montas"}
+                    </p>
+                    <div className="space-y-1.5">
+                      {[...inseminaciones].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(ins => (
+                        <div key={ins.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium capitalize">{(ins.tipo || "servicio").replace(/_/g, " ")}</p>
+                            <p className="text-xs text-muted-foreground">{format(new Date(ins.fecha), "dd MMM yyyy", { locale: es })}{ins.reproductor ? ` · ${ins.reproductor}` : ""}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            ins.resultado === "preñada" ? "bg-emerald-100 text-emerald-700" :
+                            ins.resultado === "pendiente" ? "bg-amber-100 text-amber-700" :
+                            ins.resultado === "repitio_celo" || ins.resultado === "fallida" ? "bg-red-100 text-red-700" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>{ins.resultado?.replace(/_/g, " ") || "pendiente"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {confirmacionesRepro.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Confirmaciones de preñez</p>
+                    <div className="space-y-1.5">
+                      {[...confirmacionesRepro].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(conf => (
+                        <div key={conf.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium capitalize">{conf.metodo || "Confirmación"}{conf.veterinario ? ` · ${conf.veterinario}` : ""}</p>
+                            <p className="text-xs text-muted-foreground">{format(new Date(conf.fecha), "dd MMM yyyy", { locale: es })}</p>
+                          </div>
+                          {conf.fecha_probable_parto && <span className="text-xs text-blue-600 font-medium">Parto: {conf.fecha_probable_parto}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {partosRepro.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Partos</p>
+                    <div className="space-y-1.5">
+                      {[...partosRepro].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).map(pt => (
+                        <div key={pt.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium">{pt.nombre_cria || criaLabel(pt.sexo_cria)} · {criaLabel(pt.sexo_cria)}</p>
+                            <p className="text-xs text-muted-foreground">{format(new Date(pt.fecha), "dd MMM yyyy", { locale: es })}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            pt.resultado === "cria_viva" ? "bg-emerald-100 text-emerald-700" :
+                            pt.resultado === "aborto" || pt.resultado === "cria_muerta" || pt.resultado === "complicacion" ? "bg-red-100 text-red-700" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>{(pt.resultado || "cria_viva").replace(/_/g, " ")}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        );
+      })()}
 
       {/* Sale info */}
       {venta && (
