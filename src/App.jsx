@@ -35,6 +35,8 @@ import RegistroMasivo from '@/pages/RegistroMasivo';
 import Reproduccion from '@/pages/Reproduccion';
 import Reportes from '@/pages/Reportes';
 import Proformas from '@/pages/Proformas';
+import VentaMasiva from '@/pages/VentaMasiva';
+import AsistenteRJAPP from '@/pages/AsistenteRJAPP';
 import Configuracion from '@/pages/Configuracion';
 
 // Reproductores equinos
@@ -114,12 +116,14 @@ const AuthenticatedApp = () => {
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/ventas/nueva" element={<Ventas />} />
           <Route path="/proformas" element={<Proformas />} />
+          <Route path="/ventas/masiva" element={<VentaMasiva />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/despachos" element={<Despachos />} />
 
           {/* Análisis */}
           <Route path="/reportes" element={<Reportes />} />
           <Route path="/calendario" element={<CalendarioIntegral />} />
+          <Route path="/asistente" element={<AsistenteRJAPP />} />
 
           {/* Sistema */}
           <Route path="/configuracion" element={<Configuracion />} />

@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   Home, Scale, Syringe, DollarSign, ShoppingCart, BarChart3,
   Settings, Menu, X, ChevronRight, LogOut, Bell, Truck,
-  Users, MapPin, Layers, Calendar, ClipboardList, FileText
+  Users, MapPin, Layers, Calendar, ClipboardList, FileText, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -106,6 +106,7 @@ const navGroups = [
       { path: "/gastos", label: "Gastos", icon: DollarSign },
       { path: "/ventas", label: "Ventas", icon: ShoppingCart },
       { path: "/proformas", label: "Proformas", icon: FileText },
+      { path: "/ventas/masiva", label: "Venta Masiva", icon: Layers },
       { path: "/clientes", label: "Clientes", icon: Users },
       { path: "/reproductores", label: "Reproductores", icon: HorseIcon },
       { path: "/despachos", label: "Despachos", icon: Truck },
@@ -115,6 +116,7 @@ const navGroups = [
     label: "Análisis",
     items: [
       { path: "/reportes", label: "Reportes", icon: BarChart3 },
+      { path: "/asistente", label: "Asistente RJAPP", icon: Sparkles },
       { path: "/calendario", label: "Calendario / Alertas", icon: Bell },
     ]
   },

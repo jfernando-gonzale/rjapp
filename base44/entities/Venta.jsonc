@@ -60,6 +60,14 @@
       "type": "number",
       "description": "Otros descuentos o gastos de venta"
     },
+    "venta_masiva_id": {
+      "type": "string",
+      "description": "ID de lote de venta masiva (si aplica)"
+    },
+    "utilidad_estimada": {
+      "type": "number",
+      "description": "Utilidad estimada de la venta"
+    },
     "observaciones": {
       "type": "string",
       "description": "Observaciones"

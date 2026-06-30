@@ -115,6 +115,9 @@ export default function Ventas() {
           { key: "costo_transporte", label: "Transporte" }, { key: "comision", label: "Comisión" },
         ]} />
         <Button variant="outline" size="sm" className="gap-2 h-8" onClick={() => setImportOpen(true)}><Layers className="w-4 h-4" /> Importar</Button>
+        <Link to="/ventas/masiva">
+          <Button variant="outline" className="gap-2"><Layers className="w-4 h-4" /> Venta Masiva</Button>
+        </Link>
         <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="w-4 h-4" /> Nueva Venta</Button>
       </PageHeader>
 

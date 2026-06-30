@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Scale, Syringe, DollarSign, ShoppingCart, BarChart3, Bell, TrendingUp, Baby, Truck, Users, Layers, MapPin } from "lucide-react";
+import { Scale, Syringe, DollarSign, ShoppingCart, BarChart3, Bell, TrendingUp, Baby, Truck, Users, Layers, MapPin, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/helpers";
 import RJLogo from "@/components/RJLogo";
@@ -191,6 +191,7 @@ export default function Dashboard() {
       { path: "/caballos/calendario", label: "Calendario", Icon: BarChart3, bg: "bg-amber-500", text: "text-black" },
     ];
     return [
+      { path: "/asistente", label: "Asistente IA", Icon: Sparkles, bg: "bg-amber-500", text: "text-black" },
       { path: "/bovinos", label: "Bovinos", Icon: CowIcon, bg: "bg-amber-500", text: "text-black" },
       { path: "/ovinos", label: "Ovinos", Icon: SheepIcon, bg: "bg-amber-600", text: "text-white" },
       { path: "/equinos", label: "Equinos", Icon: HorseIcon, bg: "bg-amber-700", text: "text-white" },
@@ -200,7 +201,6 @@ export default function Dashboard() {
       { path: "/tratamientos", label: "Tratamientos", Icon: Syringe, bg: "bg-gray-500", text: "text-white" },
       { path: "/ventas", label: "Ventas", Icon: ShoppingCart, bg: "bg-gray-800", text: "text-white" },
       { path: "/clientes", label: "Clientes", Icon: Users, bg: "bg-gray-700", text: "text-white" },
-      { path: "/despachos", label: "Despachos", Icon: Truck, bg: "bg-gray-600", text: "text-white" },
       { path: "/reportes", label: "Reportes", Icon: BarChart3, bg: "bg-amber-500", text: "text-black" },
       { path: "/calendario", label: "Alertas", Icon: Bell, bg: "bg-gray-800", text: "text-white" },
     ];
