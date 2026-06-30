@@ -18,6 +18,11 @@ export default function Configuracion() {
     weighing_frequency_days: 30,
     good_gain_threshold: 0.8,
     medium_gain_threshold: 0.4,
+    umbrales_productivos: {
+      bovino: { excelente: 0.80, bueno: 0.50, regular: 0.25, bajo: 0.01 },
+      ovino: { excelente: 0.25, bueno: 0.15, regular: 0.08, bajo: 0.01 },
+      equino: { excelente: 0.60, bueno: 0.35, regular: 0.15, bajo: 0.01 },
+    },
   });
 
   const { data: user } = useQuery({
@@ -27,6 +32,13 @@ export default function Configuracion() {
 
   useEffect(() => {
     if (user) {
+      let umb = user.umbrales_productivos;
+      if (typeof umb === "string") { try { umb = JSON.parse(umb); } catch { umb = null; } }
+      if (!umb) umb = {
+        bovino: { excelente: 0.80, bueno: 0.50, regular: 0.25, bajo: 0.01 },
+        ovino: { excelente: 0.25, bueno: 0.15, regular: 0.08, bajo: 0.01 },
+        equino: { excelente: 0.60, bueno: 0.35, regular: 0.15, bajo: 0.01 },
+      };
       setFormData({
         business_name: user.business_name || "",
         currency: user.currency || "COP",
@@ -34,6 +46,7 @@ export default function Configuracion() {
         weighing_frequency_days: user.weighing_frequency_days || 30,
         good_gain_threshold: user.good_gain_threshold || 0.8,
         medium_gain_threshold: user.medium_gain_threshold || 0.4,
+        umbrales_productivos: { ...umb },
       });
     }
   }, [user]);
@@ -49,10 +62,21 @@ export default function Configuracion() {
   const handleSave = () => {
     updateMutation.mutate({
       ...formData,
+      umbrales_productivos: JSON.stringify(formData.umbrales_productivos),
       weighing_frequency_days: parseInt(formData.weighing_frequency_days),
       good_gain_threshold: parseFloat(formData.good_gain_threshold),
       medium_gain_threshold: parseFloat(formData.medium_gain_threshold),
     });
+  };
+
+  const updateUmbral = (especie, campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      umbrales_productivos: {
+        ...prev.umbrales_productivos,
+        [especie]: { ...prev.umbrales_productivos[especie], [campo]: parseFloat(valor) || 0 },
+      },
+    }));
   };
 
   return (
@@ -126,6 +150,42 @@ export default function Configuracion() {
         <p className="text-xs text-muted-foreground">
           Por debajo de {formData.medium_gain_threshold} kg/día se considera baja ganancia (indicador rojo).
         </p>
+      </Card>
+
+      <Card className="p-5 space-y-4 mb-4">
+        <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Umbrales productivos por especie</h2>
+        <p className="text-sm text-muted-foreground">Clasificación de ganancia diaria con 5 niveles. Los valores dependen de raza, edad, alimentación, clima y sistema productivo.</p>
+        {["bovino", "ovino", "equino"].map(esp => (
+          <div key={esp} className="border rounded-lg p-3 space-y-2">
+            <h3 className="font-semibold capitalize text-sm">{esp === "bovino" ? "🐄 Bovinos" : esp === "ovino" ? "🐑 Ovinos" : "🐴 Equinos (potros)"}</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <Label className="text-emerald-600 text-xs">Excelente ≥</Label>
+                <Input type="number" step="0.01" value={formData.umbrales_productivos[esp].excelente}
+                  onChange={(e) => updateUmbral(esp, "excelente", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-green-600 text-xs">Bueno ≥</Label>
+                <Input type="number" step="0.01" value={formData.umbrales_productivos[esp].bueno}
+                  onChange={(e) => updateUmbral(esp, "bueno", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-amber-600 text-xs">Regular ≥</Label>
+                <Input type="number" step="0.01" value={formData.umbrales_productivos[esp].regular}
+                  onChange={(e) => updateUmbral(esp, "regular", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-orange-600 text-xs">Bajo ≥</Label>
+                <Input type="number" step="0.01" value={formData.umbrales_productivos[esp].bajo}
+                  onChange={(e) => updateUmbral(esp, "bajo", e.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {esp === "equino" && "Solo aplica a potros en crecimiento, no a equinos adultos. "}
+              Crítico: ganancia ≤ 0 o negativa (indicador rojo).
+            </p>
+          </div>
+        ))}
       </Card>
 
       <Button onClick={handleSave} className="w-full h-12 gap-2" disabled={updateMutation.isPending}>

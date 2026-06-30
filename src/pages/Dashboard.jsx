@@ -2,9 +2,10 @@ import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Scale, Syringe, DollarSign, ShoppingCart, BarChart3, Bell, TrendingUp, Baby, Truck, Users, Layers, MapPin, Sparkles } from "lucide-react";
+import { Scale, Syringe, DollarSign, ShoppingCart, BarChart3, Bell, TrendingUp, Baby, Truck, Users, Layers, MapPin, Sparkles, AlertTriangle, Target } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/helpers";
+import { buildProductiveAlerts, getThresholds } from "@/lib/gananciaUtils";
 import RJLogo from "@/components/RJLogo";
 
 // Iconos mejorados
@@ -76,6 +77,9 @@ export default function Dashboard() {
   const { data: gastos = [] } = useQuery({ queryKey: ["gastos"], queryFn: () => base44.entities.Gasto.list() });
   const { data: ventas = [] } = useQuery({ queryKey: ["ventas"], queryFn: () => base44.entities.Venta.list() });
   const { data: tratamientos = [] } = useQuery({ queryKey: ["tratamientos"], queryFn: () => base44.entities.Tratamiento.list() });
+  const { data: pesajes = [] } = useQuery({ queryKey: ["pesajes"], queryFn: () => base44.entities.Pesaje.list() });
+  const { data: eventos = [] } = useQuery({ queryKey: ["eventosCalendario"], queryFn: () => base44.entities.EventoCalendario.list() });
+  const { data: user } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
 
   const today = new Date().toISOString().split("T")[0];
   const in30 = new Date(); in30.setDate(in30.getDate() + 30);
@@ -162,12 +166,19 @@ export default function Dashboard() {
     return [];
   }, [specieFilter, animals, yeguas, gastos, ventas, today, in30Str]);
 
+  const thresholds = useMemo(() => getThresholds(user), [user]);
+  const productiveAlerts = useMemo(() => buildProductiveAlerts(animals, pesajes, tratamientos, eventos, thresholds), [animals, pesajes, tratamientos, eventos, thresholds]);
+  const lowGainAlerts = productiveAlerts.filter(a => a.type === "low_gain");
+  const noPesajeAlerts = productiveAlerts.filter(a => a.type === "no_pesaje" || a.type === "no_pesaje_reciente");
+  const readyForSale = productiveAlerts.filter(a => a.type === "ready_sale");
+  const overdueTreatments = tratamientos.filter(t => t.proxima_fecha && t.proxima_fecha < today).length;
   const upcomingTreatments = tratamientos.filter(t => t.proxima_fecha && t.proxima_fecha >= today && t.proxima_fecha <= in30Str).length;
   const partosProximos = yeguas.filter(y => y.fecha_probable_parto && y.fecha_probable_parto >= today && y.fecha_probable_parto <= in30Str).length;
 
   const quickActions = useMemo(() => {
     if (specieFilter === "bovino") return [
-      { path: "/bovinos", label: "Bovinos", Icon: CowIcon, bg: "bg-amber-500", text: "text-black" },
+      { path: "/asistente", label: "Asistente IA", Icon: Sparkles, bg: "bg-amber-500", text: "text-black" },
+      { path: "/bovinos", label: "Bovinos", Icon: CowIcon, bg: "bg-amber-600", text: "text-white" },
       { path: "/pesajes", label: "Pesajes", Icon: Scale, bg: "bg-gray-700", text: "text-white" },
       { path: "/tratamientos", label: "Tratamientos", Icon: Syringe, bg: "bg-gray-600", text: "text-white" },
       { path: "/reproduccion", label: "Reproducción", Icon: Baby, bg: "bg-amber-600", text: "text-white" },
@@ -175,7 +186,8 @@ export default function Dashboard() {
       { path: "/ventas", label: "Ventas", Icon: ShoppingCart, bg: "bg-gray-700", text: "text-white" },
     ];
     if (specieFilter === "ovino") return [
-      { path: "/ovinos", label: "Ovinos", Icon: SheepIcon, bg: "bg-amber-500", text: "text-black" },
+      { path: "/asistente", label: "Asistente IA", Icon: Sparkles, bg: "bg-amber-500", text: "text-black" },
+      { path: "/ovinos", label: "Ovinos", Icon: SheepIcon, bg: "bg-amber-600", text: "text-white" },
       { path: "/pesajes", label: "Pesajes", Icon: Scale, bg: "bg-gray-700", text: "text-white" },
       { path: "/tratamientos", label: "Tratamientos", Icon: Syringe, bg: "bg-gray-600", text: "text-white" },
       { path: "/reproduccion", label: "Reproducción", Icon: Baby, bg: "bg-amber-600", text: "text-white" },
@@ -183,7 +195,8 @@ export default function Dashboard() {
       { path: "/lotes", label: "Potreros", Icon: MapPin, bg: "bg-gray-700", text: "text-white" },
     ];
     if (specieFilter === "equino") return [
-      { path: "/equinos", label: "Equinos", Icon: HorseIcon, bg: "bg-amber-500", text: "text-black" },
+      { path: "/asistente", label: "Asistente IA", Icon: Sparkles, bg: "bg-amber-500", text: "text-black" },
+      { path: "/equinos", label: "Equinos", Icon: HorseIcon, bg: "bg-amber-600", text: "text-white" },
       { path: "/caballos/yeguas", label: "Yeguas", Icon: HorseIcon, bg: "bg-gray-800", text: "text-white" },
       { path: "/reproduccion", label: "Reproducción", Icon: Baby, bg: "bg-amber-600", text: "text-white" },
       { path: "/clientes", label: "Clientes", Icon: Users, bg: "bg-gray-700", text: "text-white" },
@@ -322,7 +335,67 @@ export default function Dashboard() {
               </div>
             </Card>
           )}
-          {upcomingTreatments === 0 && partosProximos === 0 && animals.length > 0 && (
+          {lowGainAlerts.length > 0 && (
+            <Link to="/reportes">
+              <Card className="p-4 border-l-4 border-l-red-500 hover:shadow-md transition-all cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{lowGainAlerts.length} animal{lowGainAlerts.length > 1 ? 'es' : ''} con baja ganancia</p>
+                    <p className="text-xs text-muted-foreground">{lowGainAlerts.slice(0, 2).map(a => a.numero).join(', ')}{lowGainAlerts.length > 2 ? '...' : ''}</p>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          )}
+          {noPesajeAlerts.length > 0 && (
+            <Link to="/pesajes">
+              <Card className="p-4 border-l-4 border-l-amber-500 hover:shadow-md transition-all cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <Scale className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{noPesajeAlerts.length} sin pesaje reciente</p>
+                    <p className="text-xs text-muted-foreground">Más de 30 días</p>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          )}
+          {readyForSale.length > 0 && specieFilter !== "equino" && (
+            <Link to="/ventas">
+              <Card className="p-4 border-l-4 border-l-emerald-500 hover:shadow-md transition-all cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <Target className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{readyForSale.length} listo{readyForSale.length > 1 ? 's' : ''} para venta</p>
+                    <p className="text-xs text-muted-foreground">Peso objetivo alcanzado</p>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          )}
+          {overdueTreatments > 0 && (
+            <Link to="/calendario">
+              <Card className="p-4 border-l-4 border-l-red-600 hover:shadow-md transition-all cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+                    <Syringe className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{overdueTreatments} tratamiento{overdueTreatments > 1 ? 's' : ''} vencido{overdueTreatments > 1 ? 's' : ''}</p>
+                    <p className="text-xs text-muted-foreground">Requiere atención</p>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          )}
+          {upcomingTreatments === 0 && partosProximos === 0 && lowGainAlerts.length === 0 && noPesajeAlerts.length === 0 && overdueTreatments === 0 && animals.length > 0 && (
             <Card className="p-4 border-l-4 border-l-gray-300 col-span-full">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">

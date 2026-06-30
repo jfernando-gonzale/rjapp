@@ -7,8 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Weight } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import StatCard from "@/components/shared/StatCard";
-import GainIndicator from "@/components/shared/GainIndicator";
-import { formatCurrency, formatWeight, daysBetween, calcDailyGain, CATEGORIA_GASTOS } from "@/lib/helpers";
+import { formatCurrency, formatWeight, CATEGORIA_GASTOS } from "@/lib/helpers";
+import { getThresholds } from "@/lib/gananciaUtils";
+import RankingGanancia from "@/components/reportes/RankingGanancia";
+import ReproduccionGenetica from "@/components/reportes/ReproduccionGenetica";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
 const COLORS = ["#2d9d78", "#e8a838", "#e05252", "#4a90d9", "#8b5cf6", "#f97316", "#06b6d4", "#84cc16"];
@@ -23,6 +25,19 @@ export default function Reportes() {
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
   const { data: gastos = [] } = useQuery({ queryKey: ["gastos"], queryFn: () => base44.entities.Gasto.list() });
   const { data: ventas = [] } = useQuery({ queryKey: ["ventas"], queryFn: () => base44.entities.Venta.list() });
+  const { data: pesajes = [] } = useQuery({ queryKey: ["pesajes"], queryFn: () => base44.entities.Pesaje.list() });
+  const { data: user } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
+  const { data: yeguas = [] } = useQuery({ queryKey: ["yeguas"], queryFn: () => base44.entities.Yegua.list() });
+  const { data: inseminaciones = [] } = useQuery({ queryKey: ["inseminaciones"], queryFn: () => base44.entities.Inseminacion.list() });
+  const { data: confirmaciones = [] } = useQuery({ queryKey: ["confirmaciones"], queryFn: () => base44.entities.ConfirmacionPreñez.list() });
+  const { data: partos = [] } = useQuery({ queryKey: ["partos"], queryFn: () => base44.entities.Parto.list() });
+  const { data: colectas = [] } = useQuery({ queryKey: ["colectas"], queryFn: () => base44.entities.Colecta.list() });
+  const { data: despachos = [] } = useQuery({ queryKey: ["despachos"], queryFn: () => base44.entities.Despacho.list() });
+  const { data: inconformidades = [] } = useQuery({ queryKey: ["inconformidades"], queryFn: () => base44.entities.Inconformidad.list() });
+  const { data: reproductores = [] } = useQuery({ queryKey: ["reproductores"], queryFn: () => base44.entities.Reproductor.list() });
+  const { data: eventos = [] } = useQuery({ queryKey: ["eventos"], queryFn: () => base44.entities.EventoCalendario.list() });
+
+  const thresholds = useMemo(() => getThresholds(user), [user]);
 
   const filteredLotes = filterFinca === "all" ? lotes : lotes.filter(l => l.finca_id === filterFinca);
 
@@ -74,21 +89,13 @@ export default function Reportes() {
     });
   }, [filteredLotes, filteredAnimals, filteredGastos, filteredVentas]);
 
-  const animalGains = useMemo(() => {
-    return activeAnimals.filter(a => a.ultimo_peso && a.peso_compra && a.fecha_compra && a.fecha_ultimo_pesaje).map(a => {
-      const days = daysBetween(a.fecha_compra, a.fecha_ultimo_pesaje);
-      const gain = days > 0 ? calcDailyGain(a.ultimo_peso, a.peso_compra, days) : 0;
-      return { numero: a.numero, gain, peso: a.ultimo_peso, id: a.id };
-    }).sort((a, b) => b.gain - a.gain);
-  }, [activeAnimals]);
-
   const especieTitle = { all: "General", bovino: "Bovinos 🐄", ovino: "Ovinos 🐑", equino: "Equinos 🐴" };
 
   return (
     <div>
       <PageHeader title="Reportes" subtitle={`Análisis · ${especieTitle[filterEspecie]}`} />
 
-      {/* Filtros — especie primero */}
+      {/* Filtros */}
       <div className="flex gap-2 mb-3 flex-wrap">
         {[
           { key: "all", label: "Todas las especies" },
@@ -132,12 +139,13 @@ export default function Reportes() {
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="gastos">Gastos</TabsTrigger>
           <TabsTrigger value="utilidad">Utilidad</TabsTrigger>
-          <TabsTrigger value="ranking">Ranking</TabsTrigger>
+          <TabsTrigger value="ranking">Ranking productivo</TabsTrigger>
+          <TabsTrigger value="reproduccion">Reproducción / Genética</TabsTrigger>
         </TabsList>
 
         <TabsContent value="gastos">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="p-4">
+            <Card className="!p-4">
               <h3 className="font-heading font-semibold mb-3">Gastos por categoría</h3>
               {gastosByCat.length > 0 ? (
                 <div className="h-64">
@@ -153,7 +161,7 @@ export default function Reportes() {
                 </div>
               ) : <p className="text-sm text-muted-foreground text-center py-8">Sin datos</p>}
             </Card>
-            <Card className="p-4">
+            <Card className="!p-4">
               <h3 className="font-heading font-semibold mb-3">Distribución de gastos</h3>
               {gastosByCat.length > 0 ? (
                 <div className="h-64">
@@ -172,7 +180,7 @@ export default function Reportes() {
         </TabsContent>
 
         <TabsContent value="utilidad">
-          <Card className="p-4">
+          <Card className="!p-4">
             <h3 className="font-heading font-semibold mb-3">Utilidad por lote</h3>
             {utilidadByLote.length > 0 ? (
               <div className="h-72">
@@ -194,42 +202,30 @@ export default function Reportes() {
         </TabsContent>
 
         <TabsContent value="ranking">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="p-4">
-              <h3 className="font-heading font-semibold mb-3 text-emerald-600">Mejor ganancia diaria</h3>
-              {animalGains.length > 0 ? (
-                <div className="space-y-2">
-                  {animalGains.slice(0, 10).map((a, i) => (
-                    <div key={a.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                        <span className="font-medium">#{a.numero}</span>
-                        <span className="text-sm text-muted-foreground">{formatWeight(a.peso)}</span>
-                      </div>
-                      <GainIndicator dailyGain={a.gain} />
-                    </div>
-                  ))}
-                </div>
-              ) : <p className="text-sm text-muted-foreground text-center py-8">Sin datos</p>}
-            </Card>
-            <Card className="p-4">
-              <h3 className="font-heading font-semibold mb-3 text-red-600">Menor ganancia diaria</h3>
-              {animalGains.length > 0 ? (
-                <div className="space-y-2">
-                  {[...animalGains].reverse().slice(0, 10).map((a, i) => (
-                    <div key={a.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-full bg-red-100 text-red-700 text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                        <span className="font-medium">#{a.numero}</span>
-                        <span className="text-sm text-muted-foreground">{formatWeight(a.peso)}</span>
-                      </div>
-                      <GainIndicator dailyGain={a.gain} />
-                    </div>
-                  ))}
-                </div>
-              ) : <p className="text-sm text-muted-foreground text-center py-8">Sin datos</p>}
-            </Card>
-          </div>
+          <RankingGanancia
+            animals={animals}
+            pesajes={pesajes}
+            especieFilter={filterEspecie}
+            fincaFilter={filterFinca}
+            loteFilter={filterLote}
+            thresholds={thresholds}
+          />
+        </TabsContent>
+
+        <TabsContent value="reproduccion">
+          <ReproduccionGenetica
+            especieFilter={filterEspecie}
+            animals={filteredAnimals}
+            yeguas={yeguas}
+            inseminaciones={inseminaciones}
+            confirmaciones={confirmaciones}
+            partos={partos}
+            colectas={colectas}
+            despachos={despachos}
+            inconformidades={inconformidades}
+            reproductores={reproductores}
+            eventos={eventos}
+          />
         </TabsContent>
       </Tabs>
     </div>
