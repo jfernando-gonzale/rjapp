@@ -3,12 +3,14 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   Home, Scale, Syringe, DollarSign, ShoppingCart, BarChart3,
   Settings, Menu, X, ChevronRight, LogOut, Bell, Truck,
-  Users, MapPin, Layers, Calendar, ClipboardList, FileText, Sparkles
+  Users, MapPin, Layers, Calendar, ClipboardList, FileText, Sparkles,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 import RJLogo from "@/components/RJLogo";
+import { useAuth } from "@/lib/AuthContext";
 
 // Iconos SVG agropecuarios mejorados
 const CowIcon = (props) => (
@@ -128,9 +130,17 @@ const navGroups = [
   },
 ];
 
+const adminNavGroup = {
+  label: "Administración",
+  items: [
+    { path: "/admin/reasignar", label: "Reasignar Propietario", icon: Shield },
+  ]
+};
+
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   const handleLogout = () => {
     base44.auth.logout("/login");
@@ -172,6 +182,34 @@ export default function Layout() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4">
+          {user?.role === "admin" && (
+            <div>
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-amber-400/60 mb-1.5">
+                {adminNavGroup.label}
+              </p>
+              <div className="space-y-0.5">
+                {adminNavGroup.items.map((item) => {
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setSidebarOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                        active
+                          ? "bg-amber-500 text-black"
+                          : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {navGroups.map((group) => (
             <div key={group.label}>
               <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1.5">

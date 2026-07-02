@@ -38,6 +38,7 @@ import Proformas from '@/pages/Proformas';
 import VentaMasiva from '@/pages/VentaMasiva';
 import AsistenteRJAPP from '@/pages/AsistenteRJAPP';
 import Configuracion from '@/pages/Configuracion';
+import ReasignarPropietario from '@/pages/ReasignarPropietario';
 
 // Reproductores equinos
 import ReproductoresList from '@/pages/ReproductoresList';
@@ -127,6 +128,7 @@ const AuthenticatedApp = () => {
 
           {/* Sistema */}
           <Route path="/configuracion" element={<Configuracion />} />
+          <Route path="/admin/reasignar" element={<ReasignarPropietario />} />
 
           {/* Reproductores */}
           <Route path="/reproductores" element={<ReproductoresList />} />
