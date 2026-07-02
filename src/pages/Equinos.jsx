@@ -8,17 +8,8 @@ import PageHeader from "@/components/shared/PageHeader";
 import { formatCurrency } from "@/lib/helpers";
 
 const HorseIcon = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M16 9 Q10 9 8 15 L8 25"/>
-    <path d="M16 9 Q22 9 24 15 L24 25"/>
-    <path d="M8 15 Q16 18 24 15"/>
-    <circle cx="11" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
-    <circle cx="21" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
-    <path d="M16 9 L16 5"/>
-    <path d="M16 5 Q20 3 22 5 L20 9"/>
-    <path d="M13 23 Q16 25 19 23"/>
-    <path d="M8 25 L8 29"/><path d="M11 25 L11 29"/>
-    <path d="M21 25 L21 29"/><path d="M24 25 L24 29"/>
+  <svg viewBox="0 0 32 32" fill="currentColor" stroke="none" {...props}>
+    <path fillRule="evenodd" clipRule="evenodd" d="M5 3 L5 15 Q5 26 16 26 Q27 26 27 15 L27 3 L23 3 L23 15 Q23 22 16 22 Q9 22 9 15 L9 3 Z M5.6 8 a1.4 1.4 0 1 0 2.8 0 a1.4 1.4 0 1 0 -2.8 0 M23.6 8 a1.4 1.4 0 1 0 2.8 0 a1.4 1.4 0 1 0 -2.8 0 M6.8 14 a1.2 1.2 0 1 0 2.4 0 a1.2 1.2 0 1 0 -2.4 0 M22.8 14 a1.2 1.2 0 1 0 2.4 0 a1.2 1.2 0 1 0 -2.4 0 M10 19 a1 1 0 1 0 2 0 a1 1 0 1 0 -2 0 M20 19 a1 1 0 1 0 2 0 a1 1 0 1 0 -2 0" />
   </svg>
 );
 
