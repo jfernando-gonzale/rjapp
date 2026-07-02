@@ -8,7 +8,7 @@ import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Weight } from "lucide-
 import PageHeader from "@/components/shared/PageHeader";
 import StatCard from "@/components/shared/StatCard";
 import { formatCurrency, formatWeight, CATEGORIA_GASTOS } from "@/lib/helpers";
-import { getThresholds } from "@/lib/gananciaUtils";
+import { getThresholds, getSaleWeights, classifySaleStatus } from "@/lib/gananciaUtils";
 import RankingGanancia from "@/components/reportes/RankingGanancia";
 import ReproduccionGenetica from "@/components/reportes/ReproduccionGenetica";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
@@ -40,6 +40,7 @@ export default function Reportes() {
   const { data: eventos = [] } = useQuery({ queryKey: ["eventos"], queryFn: () => base44.entities.EventoCalendario.list() });
 
   const thresholds = useMemo(() => getThresholds(user), [user]);
+  const saleWeights = useMemo(() => getSaleWeights(user), [user]);
 
   const filteredLotes = filterFinca === "all" ? lotes : lotes.filter(l => l.finca_id === filterFinca);
 
@@ -94,6 +95,25 @@ export default function Reportes() {
       return { name: l.nombre, utilidad: ven - inv - gas, ventas: ven, gastos: inv + gas };
     });
   }, [filteredLotes, filteredAnimals, filteredGastos, filteredVentas]);
+
+  const saleStats = useMemo(() => {
+    const targetAnimals = activeAnimals.filter(a => {
+      const esp = a.especie || "bovino";
+      return (esp === "bovino" || esp === "ovino") && a.ultimo_peso;
+    });
+    let ready = 0, near = 0, growing = 0;
+    let totalMissing = 0;
+    let missingCount = 0;
+    targetAnimals.forEach(a => {
+      const esp = a.especie || "bovino";
+      const status = classifySaleStatus(a.ultimo_peso, esp, saleWeights);
+      if (status?.level === "ready_sale") ready++;
+      else if (status?.level === "near_target") { near++; totalMissing += status.diff; missingCount++; }
+      else if (status?.level === "growing") { growing++; totalMissing += status.diff; missingCount++; }
+    });
+    const avgMissing = missingCount > 0 ? Math.round(totalMissing / missingCount) : 0;
+    return { ready, near, growing, total: targetAnimals.length, avgMissing };
+  }, [activeAnimals, saleWeights]);
 
   const especieTitle = { all: "General", bovino: "Bovinos 🐄", ovino: "Ovinos 🐑", equino: "Equinos 🐴" };
 
@@ -150,6 +170,16 @@ export default function Reportes() {
         <StatCard title="Total gastos" value={formatCurrency(totalGastos)} icon={DollarSign} color="accent" />
         <StatCard title="Utilidad neta" value={formatCurrency(utilidadNeta)} icon={ShoppingCart} color={utilidadNeta >= 0 ? "success" : "danger"} />
       </div>
+
+      {/* Sale weight stats */}
+      {saleStats.total > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <StatCard title="Listos para venta" value={saleStats.ready} icon={ShoppingCart} color="success" />
+          <StatCard title="Cerca del objetivo" value={saleStats.near} icon={TrendingUp} color="accent" />
+          <StatCard title="En crecimiento" value={saleStats.growing} icon={Weight} color="blue" />
+          <StatCard title="Kg faltantes prom." value={`${saleStats.avgMissing} kg`} icon={Weight} color="primary" />
+        </div>
+      )}
 
       <Tabs defaultValue="gastos" className="space-y-4">
         <TabsList className="flex-wrap h-auto gap-1">

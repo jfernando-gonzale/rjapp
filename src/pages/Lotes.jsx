@@ -14,6 +14,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, formatWeight, TIPO_LOTE } from "@/lib/helpers";
+import { getSaleWeights, classifySaleStatus } from "@/lib/gananciaUtils";
 
 const ESPECIE_LOTE = { bovino: "🐄 Bovino", ovino: "🐑 Ovino", equino: "🐴 Equino", mixto: "🌿 Mixto" };
 const ESPECIE_COLORS = {
@@ -36,6 +37,8 @@ export default function Lotes() {
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
   const { data: gastos = [] } = useQuery({ queryKey: ["gastos"], queryFn: () => base44.entities.Gasto.list() });
   const { data: ventas = [] } = useQuery({ queryKey: ["ventas"], queryFn: () => base44.entities.Venta.list() });
+  const { data: user } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
+  const saleWeights = getSaleWeights(user);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Lote.create(data),
@@ -68,7 +71,18 @@ export default function Lotes() {
     const avgWeight = withWeight.length > 0 ? withWeight.reduce((s, a) => s + a.ultimo_peso, 0) / withWeight.length : 0;
     const loteGastos = gastos.filter(g => g.lote_id === loteId).reduce((s, g) => s + (g.valor || 0), 0);
     const loteVentas = ventas.filter(v => v.lote_id === loteId).reduce((s, v) => s + (v.precio_total || 0), 0);
-    return { count: loteAnimals.length, avgWeight, gastos: loteGastos, ventas: loteVentas };
+    const especie = loteAnimals.length > 0 ? (loteAnimals[0].especie || "bovino") : null;
+    let readySale = 0, nearSale = 0;
+    if (especie && (especie === "bovino" || especie === "ovino")) {
+      loteAnimals.forEach(a => {
+        if (a.ultimo_peso) {
+          const status = classifySaleStatus(a.ultimo_peso, especie, saleWeights);
+          if (status?.level === "ready_sale") readySale++;
+          else if (status?.level === "near_target") nearSale++;
+        }
+      });
+    }
+    return { count: loteAnimals.length, avgWeight, gastos: loteGastos, ventas: loteVentas, especie, readySale, nearSale };
   };
 
   const getFincaName = (id) => fincas.find(f => f.id === id)?.nombre || "—";
@@ -160,6 +174,20 @@ export default function Lotes() {
                   <span>Gastos: {formatCurrency(stats.gastos)}</span>
                   <span>Ventas: {formatCurrency(stats.ventas)}</span>
                 </div>
+                {stats.especie && (stats.especie === "bovino" || stats.especie === "ovino") && (stats.readySale > 0 || stats.nearSale > 0) && (
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    {stats.readySale > 0 && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">
+                        {stats.readySale} listo{stats.readySale > 1 ? 's' : ''} para venta
+                      </span>
+                    )}
+                    {stats.nearSale > 0 && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700">
+                        {stats.nearSale} cerca del objetivo
+                      </span>
+                    )}
+                  </div>
+                )}
               </Card>
             );
           })}

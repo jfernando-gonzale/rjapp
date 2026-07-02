@@ -6,6 +6,11 @@ export const DEFAULT_THRESHOLDS = {
   equino: { excelente: 0.60, bueno: 0.35, regular: 0.15, bajo: 0.01 },
 };
 
+export const DEFAULT_SALE_WEIGHTS = {
+  bovino: { peso_minimo_alerta: 400, peso_objetivo: 420, peso_ideal: 450 },
+  ovino: { peso_minimo_alerta: 30, peso_objetivo: 35, peso_ideal: 40 },
+};
+
 export function getThresholds(user) {
   if (!user) return DEFAULT_THRESHOLDS;
   try {
@@ -20,6 +25,36 @@ export function getThresholds(user) {
   } catch {
     return DEFAULT_THRESHOLDS;
   }
+}
+
+export function getSaleWeights(user) {
+  if (!user) return DEFAULT_SALE_WEIGHTS;
+  try {
+    const raw = user.pesos_objetivo_venta;
+    if (!raw) return DEFAULT_SALE_WEIGHTS;
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return {
+      bovino: { ...DEFAULT_SALE_WEIGHTS.bovino, ...(parsed.bovino || {}) },
+      ovino: { ...DEFAULT_SALE_WEIGHTS.ovino, ...(parsed.ovino || {}) },
+    };
+  } catch {
+    return DEFAULT_SALE_WEIGHTS;
+  }
+}
+
+export function classifySaleStatus(peso, especie, saleWeights) {
+  if (especie !== "bovino" && especie !== "ovino") return null;
+  const sw = (saleWeights && saleWeights[especie]) || DEFAULT_SALE_WEIGHTS[especie];
+  if (!sw || peso == null || isNaN(peso)) {
+    return { level: "no_data", label: "Sin datos suficientes", color: "gray", diff: null };
+  }
+  if (peso >= sw.peso_objetivo) {
+    return { level: "ready_sale", label: "Listo para venta", color: "emerald", diff: Math.round(peso - sw.peso_objetivo) };
+  }
+  if (peso >= sw.peso_minimo_alerta) {
+    return { level: "near_target", label: "Cerca del objetivo", color: "amber", diff: Math.round(sw.peso_objetivo - peso) };
+  }
+  return { level: "growing", label: "En crecimiento", color: "blue", diff: Math.round(sw.peso_objetivo - peso) };
 }
 
 export function classifyGain(gain, especie, thresholds) {
@@ -68,7 +103,7 @@ export function isPotro(animal) {
   return false;
 }
 
-export function buildProductiveAlerts(animals, pesajes, tratamientos, eventos, thresholds) {
+export function buildProductiveAlerts(animals, pesajes, tratamientos, eventos, thresholds, saleWeights) {
   const alerts = [];
   const today = new Date().toISOString().split("T")[0];
   const now = new Date(today);
@@ -124,17 +159,30 @@ export function buildProductiveAlerts(animals, pesajes, tratamientos, eventos, t
       }
     }
 
-    // Ready for sale (bovinos ceba with peso > 400)
-    if (especie === "bovino" && a.ultimo_peso && a.ultimo_peso >= 420) {
-      alerts.push({
-        type: "ready_sale",
-        severity: "info",
-        animal_id: a.id,
-        numero: a.numero,
-        especie,
-        message: `${a.numero}: listo para venta (${a.ultimo_peso} kg)`,
-        detail: "Peso por encima de objetivo de venta",
-      });
+    // Sale weight alerts (bovinos and ovinos only)
+    if ((especie === "bovino" || especie === "ovino") && a.ultimo_peso) {
+      const sw = (saleWeights && saleWeights[especie]) || DEFAULT_SALE_WEIGHTS[especie];
+      if (sw && a.ultimo_peso >= sw.peso_objetivo) {
+        alerts.push({
+          type: "ready_sale",
+          severity: "info",
+          animal_id: a.id,
+          numero: a.numero,
+          especie,
+          message: `${a.numero}: listo para venta (${a.ultimo_peso} kg)`,
+          detail: `Objetivo: ${sw.peso_objetivo} kg · ${Math.round(a.ultimo_peso - sw.peso_objetivo)} kg por encima`,
+        });
+      } else if (sw && a.ultimo_peso >= sw.peso_minimo_alerta) {
+        alerts.push({
+          type: "near_sale",
+          severity: "warning",
+          animal_id: a.id,
+          numero: a.numero,
+          especie,
+          message: `${a.numero}: cerca del peso objetivo (${a.ultimo_peso} kg)`,
+          detail: `Faltan ${Math.round(sw.peso_objetivo - a.ultimo_peso)} kg para venta`,
+        });
+      }
     }
   });
 

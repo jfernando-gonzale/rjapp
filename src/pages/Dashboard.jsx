@@ -5,55 +5,9 @@ import { Link } from "react-router-dom";
 import { Scale, Syringe, DollarSign, ShoppingCart, BarChart3, Bell, TrendingUp, Baby, Truck, Users, Layers, MapPin, Sparkles, AlertTriangle, Target } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/helpers";
-import { buildProductiveAlerts, getThresholds } from "@/lib/gananciaUtils";
+import { buildProductiveAlerts, getThresholds, getSaleWeights } from "@/lib/gananciaUtils";
 import RJLogo from "@/components/RJLogo";
-
-// Iconos mejorados
-const CowIcon = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <ellipse cx="16" cy="18" rx="10" ry="8"/>
-    <circle cx="11" cy="16" r="1.2" fill="currentColor" stroke="none"/>
-    <circle cx="21" cy="16" r="1.2" fill="currentColor" stroke="none"/>
-    <path d="M13 22 Q16 24 19 22"/>
-    <path d="M6 18 L3 16 L4 21 L6 20"/>
-    <path d="M26 18 L29 16 L28 21 L26 20"/>
-    <path d="M11 10 L9 6 L7 7 L9 11"/>
-    <path d="M21 10 L23 6 L25 7 L23 11"/>
-    <path d="M10 26 L10 30"/><path d="M14 26 L14 30"/>
-    <path d="M18 26 L18 30"/><path d="M22 26 L22 30"/>
-  </svg>
-);
-
-const SheepIcon = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="16" cy="13" r="9" strokeWidth="2.5"/>
-    <circle cx="7" cy="10" r="3"/>
-    <circle cx="25" cy="10" r="3"/>
-    <circle cx="11" cy="8" r="2.5"/>
-    <circle cx="21" cy="8" r="2.5"/>
-    <circle cx="16" cy="6" r="2.5"/>
-    <ellipse cx="16" cy="20" rx="5" ry="3.5"/>
-    <circle cx="13" cy="17" r="1" fill="currentColor" stroke="none"/>
-    <circle cx="19" cy="17" r="1" fill="currentColor" stroke="none"/>
-    <path d="M11 23 L11 28"/><path d="M15 24 L15 28"/>
-    <path d="M17 24 L17 28"/><path d="M21 23 L21 28"/>
-  </svg>
-);
-
-const HorseIcon = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M16 8 Q10 8 8 14 L8 24"/>
-    <path d="M16 8 Q22 8 24 14 L24 24"/>
-    <path d="M8 14 Q16 17 24 14"/>
-    <circle cx="11" cy="12" r="1.2" fill="currentColor" stroke="none"/>
-    <circle cx="21" cy="12" r="1.2" fill="currentColor" stroke="none"/>
-    <path d="M16 8 L16 4"/>
-    <path d="M16 4 Q20 2 22 4 L20 8"/>
-    <path d="M13 22 Q16 24 19 22"/>
-    <path d="M8 24 L8 28"/><path d="M11 24 L11 28"/>
-    <path d="M21 24 L21 28"/><path d="M24 24 L24 28"/>
-  </svg>
-);
+import { CowIcon, SheepIcon, HorseIcon } from "@/components/shared/SpeciesIcons";
 
 const FarmIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -167,10 +121,12 @@ export default function Dashboard() {
   }, [specieFilter, animals, yeguas, gastos, ventas, today, in30Str]);
 
   const thresholds = useMemo(() => getThresholds(user), [user]);
-  const productiveAlerts = useMemo(() => buildProductiveAlerts(animals, pesajes, tratamientos, eventos, thresholds), [animals, pesajes, tratamientos, eventos, thresholds]);
+  const saleWeights = useMemo(() => getSaleWeights(user), [user]);
+  const productiveAlerts = useMemo(() => buildProductiveAlerts(animals, pesajes, tratamientos, eventos, thresholds, saleWeights), [animals, pesajes, tratamientos, eventos, thresholds, saleWeights]);
   const lowGainAlerts = productiveAlerts.filter(a => a.type === "low_gain");
   const noPesajeAlerts = productiveAlerts.filter(a => a.type === "no_pesaje" || a.type === "no_pesaje_reciente");
   const readyForSale = productiveAlerts.filter(a => a.type === "ready_sale");
+  const nearSale = productiveAlerts.filter(a => a.type === "near_sale");
   const overdueTreatments = tratamientos.filter(t => t.proxima_fecha && t.proxima_fecha < today).length;
   const upcomingTreatments = tratamientos.filter(t => t.proxima_fecha && t.proxima_fecha >= today && t.proxima_fecha <= in30Str).length;
   const partosProximos = yeguas.filter(y => y.fecha_probable_parto && y.fecha_probable_parto >= today && y.fecha_probable_parto <= in30Str).length;
@@ -375,6 +331,21 @@ export default function Dashboard() {
                   <div>
                     <p className="text-sm font-semibold">{readyForSale.length} listo{readyForSale.length > 1 ? 's' : ''} para venta</p>
                     <p className="text-xs text-muted-foreground">Peso objetivo alcanzado</p>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          )}
+          {nearSale.length > 0 && specieFilter !== "equino" && (
+            <Link to="/pesajes">
+              <Card className="p-4 border-l-4 border-l-amber-500 hover:shadow-md transition-all cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <Target className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{nearSale.length} cerca del peso objetivo</p>
+                    <p className="text-xs text-muted-foreground">{nearSale.slice(0, 2).map(a => a.numero).join(', ')}{nearSale.length > 2 ? '...' : ''}</p>
                   </div>
                 </div>
               </Card>

@@ -16,16 +16,21 @@ export const CowIcon = (props) => (
 );
 
 export const SheepIcon = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="16" cy="13" r="8.5" strokeWidth="2.2"/>
-    <circle cx="7.5" cy="11" r="3"/><circle cx="24.5" cy="11" r="3"/>
-    <circle cx="11" cy="8" r="2.5"/><circle cx="21" cy="8" r="2.5"/>
-    <circle cx="16" cy="6" r="2.5"/>
-    <ellipse cx="16" cy="20" rx="5" ry="3.5"/>
-    <circle cx="13" cy="17.5" r="1" fill="currentColor" stroke="none"/>
-    <circle cx="19" cy="17.5" r="1" fill="currentColor" stroke="none"/>
-    <path d="M11 24 L11 29"/><path d="M15 25 L15 29"/>
-    <path d="M17 25 L17 29"/><path d="M21 24 L21 29"/>
+  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <circle cx="16" cy="12" r="7"/>
+    <circle cx="8" cy="10" r="3"/>
+    <circle cx="24" cy="10" r="3"/>
+    <circle cx="11" cy="6" r="2.8"/>
+    <circle cx="21" cy="6" r="2.8"/>
+    <circle cx="16" cy="5" r="2.5"/>
+    <ellipse cx="16" cy="17" rx="4" ry="3"/>
+    <circle cx="14.2" cy="16.5" r="0.8" fill="currentColor" stroke="none"/>
+    <circle cx="17.8" cy="16.5" r="0.8" fill="currentColor" stroke="none"/>
+    <path d="M15 19 Q16 19.8 17 19"/>
+    <path d="M12 20 L12 28"/>
+    <path d="M15 20 L15 28"/>
+    <path d="M17 20 L17 28"/>
+    <path d="M20 20 L20 28"/>
   </svg>
 );
 

@@ -10,7 +10,7 @@ import GainIndicator from "@/components/shared/GainIndicator";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, formatWeight, ESTADO_ANIMAL, SEXO_ANIMAL, TIPO_TRATAMIENTO, TIPO_PROCEDIMIENTO, CATEGORIA_GASTOS } from "@/lib/helpers";
 import { exportToCsv } from "@/lib/csv";
-import { calcGainFromPesajes, classifyGain, getThresholds, isPotro } from "@/lib/gananciaUtils";
+import { calcGainFromPesajes, classifyGain, getThresholds, getSaleWeights, classifySaleStatus, isPotro } from "@/lib/gananciaUtils";
 import { getTerminologia } from "@/lib/reproduccion";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { format } from "date-fns";
@@ -95,6 +95,10 @@ export default function AnimalDetail() {
   const gainInfo = calcGainFromPesajes(sortedPesajes);
   const gainClassification = gainInfo ? classifyGain(gainInfo.gain, especie, thresholds) : null;
   const showGain = especie !== "equino" || isPotro(animal);
+  const saleWeights = getSaleWeights(user);
+  const saleStatus = (especie === "bovino" || especie === "ovino") && animal.estado === "activo"
+    ? classifySaleStatus(animal.ultimo_peso, especie, saleWeights)
+    : null;
 
   // Chart data
   const chartData = sortedPesajes.map(p => ({
@@ -174,6 +178,39 @@ export default function AnimalDetail() {
           <p className="text-xs text-muted-foreground">Costo acumulado</p>
         </Card>
       </div>
+
+      {/* Sale status */}
+      {saleStatus && (
+        <Card className={`p-4 mb-6 border-l-4 ${
+          saleStatus.level === "ready_sale" ? "border-l-emerald-500 bg-emerald-50" :
+          saleStatus.level === "near_target" ? "border-l-amber-500 bg-amber-50" :
+          saleStatus.level === "growing" ? "border-l-blue-400 bg-blue-50" :
+          "border-l-gray-300"
+        }`}>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 className="font-heading font-semibold text-sm">Estado frente a venta</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Peso actual: <span className="font-medium text-foreground">{animal.ultimo_peso ? formatWeight(animal.ultimo_peso) : "—"}</span>
+                {" · "}Objetivo: <span className="font-medium text-foreground">{saleWeights[especie]?.peso_objetivo} kg</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {saleStatus.level !== "no_data" && saleStatus.diff != null && (
+                <span className="text-sm font-medium text-muted-foreground">
+                  {saleStatus.level === "ready_sale" ? `+${saleStatus.diff} kg sobre objetivo` : `${saleStatus.diff} kg faltantes`}
+                </span>
+              )}
+              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                saleStatus.level === "ready_sale" ? "bg-emerald-100 text-emerald-700" :
+                saleStatus.level === "near_target" ? "bg-amber-100 text-amber-700" :
+                saleStatus.level === "growing" ? "bg-blue-100 text-blue-700" :
+                "bg-gray-100 text-gray-500"
+              }`}>{saleStatus.label}</span>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-6">

@@ -21,6 +21,10 @@ export default function Configuracion() {
       ovino: { excelente: 0.25, bueno: 0.15, regular: 0.08, bajo: 0.01 },
       equino: { excelente: 0.60, bueno: 0.35, regular: 0.15, bajo: 0.01 },
     },
+    pesos_objetivo_venta: {
+      bovino: { peso_minimo_alerta: 400, peso_objetivo: 420, peso_ideal: 450 },
+      ovino: { peso_minimo_alerta: 30, peso_objetivo: 35, peso_ideal: 40 },
+    },
   });
 
   const { data: user } = useQuery({
@@ -37,12 +41,19 @@ export default function Configuracion() {
         ovino: { excelente: 0.25, bueno: 0.15, regular: 0.08, bajo: 0.01 },
         equino: { excelente: 0.60, bueno: 0.35, regular: 0.15, bajo: 0.01 },
       };
+      let pv = user.pesos_objetivo_venta;
+      if (typeof pv === "string") { try { pv = JSON.parse(pv); } catch { pv = null; } }
+      if (!pv) pv = {
+        bovino: { peso_minimo_alerta: 400, peso_objetivo: 420, peso_ideal: 450 },
+        ovino: { peso_minimo_alerta: 30, peso_objetivo: 35, peso_ideal: 40 },
+      };
       setFormData({
         business_name: user.business_name || "",
         currency: user.currency || "COP",
         weight_unit: user.weight_unit || "kg",
         weighing_frequency_days: user.weighing_frequency_days || 30,
         umbrales_productivos: { ...umb },
+        pesos_objetivo_venta: { ...pv },
       });
     }
   }, [user]);
@@ -59,8 +70,19 @@ export default function Configuracion() {
     updateMutation.mutate({
       ...formData,
       umbrales_productivos: JSON.stringify(formData.umbrales_productivos),
+      pesos_objetivo_venta: JSON.stringify(formData.pesos_objetivo_venta),
       weighing_frequency_days: parseInt(formData.weighing_frequency_days),
     });
+  };
+
+  const updateSaleWeight = (especie, campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      pesos_objetivo_venta: {
+        ...prev.pesos_objetivo_venta,
+        [especie]: { ...prev.pesos_objetivo_venta[especie], [campo]: parseFloat(valor) || 0 },
+      },
+    }));
   };
 
   const updateUmbral = (especie, campo, valor) => {
@@ -162,6 +184,42 @@ export default function Configuracion() {
             </p>
           </div>
         ))}
+      </Card>
+
+      <Card className="p-5 space-y-4 mb-4">
+        <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Pesos objetivo de venta</h2>
+        <p className="text-sm text-muted-foreground">Define desde qué peso un animal se considera listo para vender. Aplica a bovinos y ovinos.</p>
+        {["bovino", "ovino"].map(esp => (
+          <div key={esp} className="border rounded-lg p-3 space-y-2">
+            <h3 className="font-semibold capitalize text-sm">{esp === "bovino" ? "🐄 Bovinos" : "🐑 Ovinos"}</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-amber-600 text-xs">Peso mín. alerta (kg)</Label>
+                <Input type="number" step="1" value={formData.pesos_objetivo_venta[esp].peso_minimo_alerta}
+                  onChange={(e) => updateSaleWeight(esp, "peso_minimo_alerta", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-emerald-600 text-xs">Peso objetivo venta (kg)</Label>
+                <Input type="number" step="1" value={formData.pesos_objetivo_venta[esp].peso_objetivo}
+                  onChange={(e) => updateSaleWeight(esp, "peso_objetivo", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-blue-600 text-xs">Peso ideal (kg)</Label>
+                <Input type="number" step="1" value={formData.pesos_objetivo_venta[esp].peso_ideal}
+                  onChange={(e) => updateSaleWeight(esp, "peso_ideal", e.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-emerald-600">Listo para venta:</span> peso ≥ {formData.pesos_objetivo_venta[esp].peso_objetivo} kg ·
+              <span className="font-semibold text-amber-600"> Cerca:</span> {formData.pesos_objetivo_venta[esp].peso_minimo_alerta}–{formData.pesos_objetivo_venta[esp].peso_objetivo} kg ·
+              <span className="font-semibold text-blue-600"> En crecimiento:</span> &lt; {formData.pesos_objetivo_venta[esp].peso_minimo_alerta} kg
+            </p>
+          </div>
+        ))}
+        <div className="border rounded-lg p-3 bg-blue-50 border-blue-200">
+          <h3 className="font-semibold text-sm text-blue-900">🐴 Equinos</h3>
+          <p className="text-xs text-blue-800 mt-1">En equinos no se usa peso objetivo de venta como indicador principal. Para potros puede usarse seguimiento de crecimiento, pero no alerta automática de venta por peso.</p>
+        </div>
       </Card>
 
       <Button onClick={handleSave} className="w-full h-12 gap-2" disabled={updateMutation.isPending}>

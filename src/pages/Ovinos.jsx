@@ -4,22 +4,9 @@ import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Scale, Syringe, ShoppingCart, DollarSign, Baby, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { SheepIcon } from "@/components/shared/SpeciesIcons";
 import PageHeader from "@/components/shared/PageHeader";
 import { formatCurrency } from "@/lib/helpers";
-
-const SheepIcon = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="16" cy="13" r="8.5" strokeWidth="2.2"/>
-    <circle cx="7.5" cy="11" r="3"/><circle cx="24.5" cy="11" r="3"/>
-    <circle cx="11" cy="8" r="2.5"/><circle cx="21" cy="8" r="2.5"/>
-    <circle cx="16" cy="6" r="2.5"/>
-    <ellipse cx="16" cy="20" rx="5" ry="3.5"/>
-    <circle cx="13" cy="17.5" r="1" fill="currentColor" stroke="none"/>
-    <circle cx="19" cy="17.5" r="1" fill="currentColor" stroke="none"/>
-    <path d="M11 24 L11 29"/><path d="M15 25 L15 29"/>
-    <path d="M17 25 L17 29"/><path d="M21 24 L21 29"/>
-  </svg>
-);
 
 export default function Ovinos() {
   const { data: animals = [] } = useQuery({
