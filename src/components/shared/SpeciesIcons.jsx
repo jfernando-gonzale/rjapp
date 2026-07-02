@@ -37,19 +37,12 @@ export const SheepIcon = (props) => (
 );
 
 export const HorseIcon = (props) => (
-  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M21 7 L19 2 L17 7"/>
-    <path d="M21 7 Q14 6 10 10 Q7 13 7 17"/>
-    <path d="M7 17 Q7 20 10 21"/>
-    <path d="M10 21 Q13 22 14 25 L14 28"/>
-    <path d="M14 28 L21 28 L21 7"/>
-    <circle cx="16" cy="12" r="1" fill="currentColor" stroke="none"/>
-    <circle cx="9" cy="16" r="0.7" fill="currentColor" stroke="none"/>
-    <path d="M8 19 Q10 20 12 19"/>
-    <path d="M21 9 L25 7"/>
-    <path d="M21 13 L25 12"/>
-    <path d="M21 17 L25 18"/>
-    <path d="M21 21 L25 23"/>
+  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M9 5 L9 15 Q9 23 16 23 Q23 23 23 15 L23 5"/>
+    <circle cx="9" cy="10" r="0.9" fill="currentColor" stroke="none"/>
+    <circle cx="23" cy="10" r="0.9" fill="currentColor" stroke="none"/>
+    <circle cx="11" cy="16" r="0.8" fill="currentColor" stroke="none"/>
+    <circle cx="21" cy="16" r="0.8" fill="currentColor" stroke="none"/>
   </svg>
 );
 
