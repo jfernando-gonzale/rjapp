@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import {
-  Bug as Horse, Heart, Baby, Calendar, AlertTriangle, TrendingUp,
+  Heart, Baby, Calendar, AlertTriangle, TrendingUp,
   Eye, Activity, GitBranch, Baby as BabyIcon
 } from "lucide-react";
+import { HorseIcon } from "@/components/shared/SpeciesIcons";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -111,7 +112,7 @@ export default function CaballosDashboard() {
           <Card className="p-4 hover:shadow-lg transition-all cursor-pointer group active:scale-[0.98]">
             <div className="flex flex-col items-center gap-2 text-center">
               <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Horse className="w-6 h-6 text-white" />
+                <HorseIcon className="w-6 h-6 text-white" />
               </div>
               <span className="text-sm font-medium">Yeguas</span>
             </div>
@@ -191,7 +192,7 @@ export default function CaballosDashboard() {
           title="Total yeguas"
           value={totalYeguas}
           subtitle={`${yeguasVacias} vacías`}
-          icon={Horse}
+          icon={HorseIcon}
           color="primary"
         />
         <StatCard
@@ -310,7 +311,7 @@ export default function CaballosDashboard() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <Horse className="w-5 h-5 text-emerald-600" />
+                      <HorseIcon className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <p className="font-medium text-sm">{yegua.nombre}</p>

@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import {
-  ArrowLeft, Bug as Horse, Heart, Baby, GitBranch, Calendar,
+  ArrowLeft, Heart, Baby, GitBranch, Calendar,
   Eye, AlertTriangle, RotateCcw, Edit, Pencil
 } from "lucide-react";
+import { HorseIcon } from "@/components/shared/SpeciesIcons";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +109,7 @@ export default function YeguaDetail() {
           </Button>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <Horse className="w-6 h-6 text-emerald-600" />
+              <HorseIcon className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-heading font-bold">{yegua.nombre}</h1>

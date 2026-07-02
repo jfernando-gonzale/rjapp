@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, LayoutGrid, Table as TableIcon, Bug as Horse, Eye } from "lucide-react";
+import { Plus, Search, LayoutGrid, Table as TableIcon, Eye } from "lucide-react";
+import { HorseIcon } from "@/components/shared/SpeciesIcons";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,7 +128,7 @@ export default function YeguasList() {
       {/* Contenido */}
       {yeguasFiltradas.length === 0 ? (
         <EmptyState
-          icon={Horse}
+          icon={HorseIcon}
           title="No hay yeguas registradas"
           description="Empieza registrando tu primera yegua para llevar el control reproductivo"
           actionLabel="Nueva Yegua"
@@ -147,7 +148,7 @@ export default function YeguasList() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <Horse className="w-6 h-6 text-emerald-600" />
+                      <HorseIcon className="w-6 h-6 text-emerald-600" />
                     </div>
                     <div>
                       <h3 className="font-heading font-semibold">{yegua.nombre}</h3>
