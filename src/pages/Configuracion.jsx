@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Save, Check } from "lucide-react";
+import { Settings, Save, Check, LogOut } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 
 export default function Configuracion() {
@@ -167,6 +167,11 @@ export default function Configuracion() {
       <Button onClick={handleSave} className="w-full h-12 gap-2" disabled={updateMutation.isPending}>
         {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
         {saved ? "¡Guardado!" : "Guardar configuración"}
+      </Button>
+
+      <Button onClick={() => base44.auth.logout("/login")} variant="outline" className="w-full h-12 gap-2 mt-3 text-destructive hover:text-destructive">
+        <LogOut className="w-5 h-5" />
+        Cerrar sesión
       </Button>
     </div>
   );

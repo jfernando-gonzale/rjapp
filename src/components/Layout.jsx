@@ -163,12 +163,12 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:sticky top-0 left-0 z-50 h-screen w-64 flex flex-col transition-transform duration-300 ease-in-out",
+        "fixed lg:sticky top-0 left-0 z-50 w-64 flex flex-col transition-transform duration-300 ease-in-out",
         "bg-[#111111] text-white",
         sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      )}>
+      )} style={{ height: '100vh', height: '100dvh', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {/* Logo area */}
-        <div className="px-4 py-5 border-b border-white/10">
+        <div className="px-4 py-5 border-b border-white/10 shrink-0">
           <div className="flex items-center justify-between">
             <RJLogo size="md" variant="sidebar" />
             <button
@@ -181,7 +181,7 @@ export default function Layout() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4">
+        <nav className="flex-1 overflow-y-auto overscroll-contain py-3 px-3 space-y-4">
           {user?.role === "admin" && (
             <div>
               <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-amber-400/60 mb-1.5">
@@ -241,8 +241,8 @@ export default function Layout() {
           ))}
         </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-t border-white/10">
+        {/* Logout - fixed at bottom with safe area */}
+        <div className="shrink-0 p-3 border-t border-white/10" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/50 hover:bg-white/8 hover:text-white w-full transition-colors"
