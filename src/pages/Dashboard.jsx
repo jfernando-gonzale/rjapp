@@ -33,6 +33,8 @@ export default function Dashboard() {
   const { data: tratamientos = [] } = useQuery({ queryKey: ["tratamientos"], queryFn: () => base44.entities.Tratamiento.list() });
   const { data: pesajes = [] } = useQuery({ queryKey: ["pesajes"], queryFn: () => base44.entities.Pesaje.list() });
   const { data: eventos = [] } = useQuery({ queryKey: ["eventosCalendario"], queryFn: () => base44.entities.EventoCalendario.list() });
+  const { data: reproductores = [] } = useQuery({ queryKey: ["reproductores"], queryFn: () => base44.entities.Reproductor.list() });
+  const { data: crias = [] } = useQuery({ queryKey: ["crias"], queryFn: () => base44.entities.Cria.list() });
   const { data: user } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
 
   const today = new Date().toISOString().split("T")[0];
@@ -40,20 +42,28 @@ export default function Dashboard() {
   const in30Str = in30.toISOString().split("T")[0];
 
   const stats = useMemo(() => {
+    // Los equinos se registran en entidades separadas (Yegua, Reproductor, Cria),
+    // no en la entidad Animal, por lo que se cuentan desde esas tablas.
+    const yeguasActivas = yeguas.filter(y => y.estado_reproductivo !== "retirada");
+    const reproductoresActivos = reproductores.filter(r => r.estado === "activo");
+    const criasActivas = crias.filter(c => c.estado !== "vendida" && c.estado !== "muerta");
+    const equinosActivos = yeguasActivas.length + reproductoresActivos.length + criasActivas.length;
+
     if (specieFilter === "todos") {
       const bovinos = animals.filter(a => a.especie === "bovino" || !a.especie);
       const ovinos = animals.filter(a => a.especie === "ovino");
-      const equinos = animals.filter(a => a.especie === "equino");
-      const activos = animals.filter(a => a.estado === "activo");
+      const bovinosActivos = bovinos.filter(a => a.estado === "activo").length;
+      const ovinosActivos = ovinos.filter(a => a.estado === "activo").length;
       const vendidos = animals.filter(a => a.estado === "vendido");
       const totalGastos = gastos.reduce((s, g) => s + (g.valor || 0), 0);
       const totalVentas = ventas.reduce((s, v) => s + (v.precio_total || 0), 0);
       const totalInv = animals.reduce((s, a) => s + (a.precio_compra || 0), 0);
+      const totalActivos = bovinosActivos + ovinosActivos + equinosActivos;
       return [
-        { label: "Bovinos activos", value: bovinos.filter(a => a.estado === "activo").length, sub: `${bovinos.length} total`, Icon: CowIcon, accent: false },
-        { label: "Ovinos activos", value: ovinos.filter(a => a.estado === "activo").length, sub: `${ovinos.length} total`, Icon: SheepIcon, accent: false },
-        { label: "Equinos activos", value: equinos.filter(a => a.estado === "activo").length, sub: `${equinos.length} total`, Icon: HorseIcon, accent: false },
-        { label: "Total activos", value: activos.length, sub: `${vendidos.length} vendidos`, Icon: null, accent: false },
+        { label: "Bovinos activos", value: bovinosActivos, sub: `${bovinos.length} total`, Icon: CowIcon, accent: false },
+        { label: "Ovinos activos", value: ovinosActivos, sub: `${ovinos.length} total`, Icon: SheepIcon, accent: false },
+        { label: "Equinos activos", value: equinosActivos, sub: `${yeguasActivas.length} yeguas · ${reproductoresActivos.length} repr.`, Icon: HorseIcon, accent: false },
+        { label: "Total activos", value: totalActivos, sub: `${vendidos.length} vendidos`, Icon: null, accent: false },
         { label: "Total gastos", value: formatCurrency(totalGastos), sub: "Todos los gastos", Icon: null, accent: false, large: true },
         { label: "Total ventas", value: formatCurrency(totalVentas), sub: `Utilidad: ${formatCurrency(totalVentas - totalInv - totalGastos)}`, Icon: null, accent: (totalVentas - totalInv - totalGastos) >= 0, large: true },
       ];
@@ -99,18 +109,17 @@ export default function Dashboard() {
     }
 
     if (specieFilter === "equino") {
-      const equ = animals.filter(a => a.especie === "equino");
-      const activos = equ.filter(a => a.estado === "activo");
-      const yeguasActivas = yeguas.filter(y => y.estado_reproductivo !== "retirada");
       const preñadas = yeguas.filter(y => y.estado_reproductivo === "preñada");
+      const paridas = yeguas.filter(y => y.estado_reproductivo === "parida");
       const partosProx = yeguas.filter(y => y.fecha_probable_parto && y.fecha_probable_parto >= today && y.fecha_probable_parto <= in30Str);
       const gEqu = gastos.filter(g => g.especie === "equino");
       const vEqu = ventas.filter(v => v.especie === "equino" || v.especie === "semen_equino");
       const totalGEqu = gEqu.reduce((s, g) => s + (g.valor || 0), 0);
       const totalVEqu = vEqu.reduce((s, v) => s + (v.precio_total || 0), 0);
       return [
-        { label: "Equinos activos", value: activos.length, sub: `${equ.length} total`, Icon: HorseIcon, accent: false },
-        { label: "Yeguas activas", value: yeguasActivas.length, sub: `${preñadas.length} preñadas`, Icon: null, accent: preñadas.length > 0 },
+        { label: "Equinos activos", value: equinosActivos, sub: `${yeguasActivas.length} yeguas · ${reproductoresActivos.length} repr.`, Icon: HorseIcon, accent: false },
+        { label: "Yeguas activas", value: yeguasActivas.length, sub: `${preñadas.length} preñadas · ${paridas.length} paridas`, Icon: null, accent: preñadas.length > 0 },
+        { label: "Crías activas", value: criasActivas.length, sub: "Potros y potrancas", Icon: null, accent: false },
         { label: "Partos próximos", value: partosProx.length, sub: "Próximos 30 días", Icon: null, accent: partosProx.length > 0 },
         { label: "Gastos equinos", value: formatCurrency(totalGEqu), sub: "Total gastos", Icon: null, accent: false, large: true },
         { label: "Ventas equinas", value: formatCurrency(totalVEqu), sub: "Animales + semen", Icon: null, accent: false, large: true },
@@ -118,7 +127,7 @@ export default function Dashboard() {
     }
 
     return [];
-  }, [specieFilter, animals, yeguas, gastos, ventas, today, in30Str]);
+  }, [specieFilter, animals, yeguas, reproductores, crias, gastos, ventas, today, in30Str]);
 
   const thresholds = useMemo(() => getThresholds(user), [user]);
   const saleWeights = useMemo(() => getSaleWeights(user), [user]);
