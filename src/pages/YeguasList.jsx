@@ -13,6 +13,7 @@ import {
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import EstadoReproductivoBadge from "@/components/caballos/EstadoReproductivoBadge";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { ESTADO_REPRODUCTIVO, calcDiasFaltantesParto } from "@/lib/caballos";
 import { toast } from "sonner";
 
@@ -153,7 +154,10 @@ export default function YeguasList() {
                       {yegua.numero && <p className="text-xs text-muted-foreground">#{yegua.numero}</p>}
                     </div>
                   </div>
-                  <EstadoReproductivoBadge estado={yegua.estado_reproductivo} />
+                  <div className="flex items-center gap-1">
+                    <EstadoReproductivoBadge estado={yegua.estado_reproductivo} />
+                    <DeleteConfirmButton entityName="Yegua" recordId={yegua.id} recordLabel={`la yegua "${yegua.nombre}"`} queryKeysToInvalidate={["yeguas"]} />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 text-sm">
@@ -233,7 +237,10 @@ export default function YeguasList() {
                     </TableCell>
                     <TableCell className="text-sm">{yegua.fecha_ultimo_parto || "-"}</TableCell>
                     <TableCell>
-                      <Eye className="w-4 h-4 text-muted-foreground" />
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-4 h-4 text-muted-foreground" />
+                        <DeleteConfirmButton entityName="Yegua" recordId={yegua.id} recordLabel={`la yegua "${yegua.nombre}"`} queryKeysToInvalidate={["yeguas"]} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

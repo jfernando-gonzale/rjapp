@@ -12,6 +12,7 @@ import { Layers, Pencil } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, formatWeight, TIPO_LOTE } from "@/lib/helpers";
 
 const ESPECIE_LOTE = { bovino: "🐄 Bovino", ovino: "🐑 Ovino", equino: "🐴 Equino", mixto: "🌿 Mixto" };
@@ -135,6 +136,14 @@ export default function Lotes() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(lote); setDialogOpen(true); }}>
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
+                    <DeleteConfirmButton
+                      entityName="Lote"
+                      recordId={lote.id}
+                      recordLabel={`el lote "${lote.nombre}"`}
+                      warningText={stats.count > 0 ? `Este lote tiene ${stats.count} animales asociados. Traslada o elimina esos animales antes de borrar este registro.` : undefined}
+                      queryKeysToInvalidate={["lotes"]}
+                      disabled={stats.count > 0}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-center">

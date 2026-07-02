@@ -13,6 +13,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DepartamentoMunicipioFields from "@/components/shared/DepartamentoMunicipioFields";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, formatWeight } from "@/lib/helpers";
 
 export default function Fincas() {
@@ -145,6 +146,14 @@ export default function Fincas() {
                     <Button variant="ghost" size="icon" onClick={() => openEdit(finca)}>
                       <Pencil className="w-4 h-4" />
                     </Button>
+                    <DeleteConfirmButton
+                      entityName="Finca"
+                      recordId={finca.id}
+                      recordLabel={`la finca "${finca.nombre}"`}
+                      warningText={stats.activeAnimals > 0 ? `Esta finca tiene ${stats.activeAnimals} animales asociados. Traslada o elimina esos animales antes de borrar este registro.` : undefined}
+                      queryKeysToInvalidate={["fincas"]}
+                      disabled={stats.activeAnimals > 0}
+                    />
                   </div>
                 </div>
 

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
 import { formatCurrency } from "@/lib/helpers";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 
 const RAZAS = {
   criollo: "Criollo", appaloosa: "Appaloosa", cuarto_de_milla: "Cuarto de Milla",
@@ -122,10 +123,13 @@ export default function ReproductoresList() {
                       <p className="text-sm text-muted-foreground">{RAZAS[r.raza] || r.raza} · {getFinca(r.finca_id)}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${ESTADO_COLORS[r.estado] || "bg-gray-100 text-gray-600"}`}>
-                        {ESTADO_LABELS[r.estado] || r.estado}
-                      </span>
-                      {r.tipo === "externo" && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-semibold">Externo</span>}
+                      <div className="flex items-center gap-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${ESTADO_COLORS[r.estado] || "bg-gray-100 text-gray-600"}`}>
+                          {ESTADO_LABELS[r.estado] || r.estado}
+                        </span>
+                        {r.tipo === "externo" && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-semibold">Externo</span>}
+                        <DeleteConfirmButton entityName="Reproductor" recordId={r.id} recordLabel={`el reproductor "${r.nombre}"`} queryKeysToInvalidate={["reproductores"]} />
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 gap-2 text-center">

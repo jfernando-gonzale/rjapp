@@ -11,6 +11,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import EstadoCriaBadge from "@/components/caballos/EstadoCriaBadge";
 import { ESTADO_CRIA, SEXO_CRIA, calcEdadDestete, calcFechaDesteteSugerida } from "@/lib/caballos";
 import { daysBetween } from "@/lib/helpers";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 
 export default function CriasList() {
   const navigate = useNavigate();
@@ -96,7 +97,10 @@ export default function CriasList() {
                       <p className="text-xs text-muted-foreground">Madre: {madreNombre(c.madre_id)}</p>
                     </div>
                   </div>
-                  <EstadoCriaBadge estado={c.estado} />
+                  <div className="flex items-center gap-1">
+                    <EstadoCriaBadge estado={c.estado} />
+                    <DeleteConfirmButton entityName="Cria" recordId={c.id} recordLabel={`la cría "${c.nombre || 'sin nombre'}"`} queryKeysToInvalidate={["crias"]} />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 text-sm">

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import PageHeader from "@/components/shared/PageHeader";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 
 const ESTADOS = ["programado", "enviado", "entregado", "cancelado", "con_novedad"];
 const ESTADO_LABELS = { programado: "Programado", enviado: "Enviado", entregado: "Entregado", cancelado: "Cancelado", con_novedad: "Con novedad" };
@@ -150,9 +151,12 @@ export default function Despachos() {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => { setForm({ ...d }); setEditing(d.id); setOpen(true); }}>
-                  Editar
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" onClick={() => { setForm({ ...d }); setEditing(d.id); setOpen(true); }}>
+                    Editar
+                  </Button>
+                  <DeleteConfirmButton entityName="Despacho" recordId={d.id} recordLabel="este despacho" queryKeysToInvalidate={["despachos"]} />
+                </div>
               </div>
             </Card>
           ))}

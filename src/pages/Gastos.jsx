@@ -15,6 +15,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import { formatCurrency, CATEGORIA_GASTOS } from "@/lib/helpers";
 import CsvExportButton from "@/components/shared/CsvExportButton";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -149,7 +150,10 @@ export default function Gastos() {
                     </p>
                   </div>
                 </div>
-                <p className="font-bold text-lg">{formatCurrency(g.valor)}</p>
+                <div className="flex items-center gap-1">
+                  <p className="font-bold text-lg">{formatCurrency(g.valor)}</p>
+                  <DeleteConfirmButton entityName="Gasto" recordId={g.id} recordLabel="este gasto" queryKeysToInvalidate={["gastos"]} />
+                </div>
               </div>
             </Card>
           ))}

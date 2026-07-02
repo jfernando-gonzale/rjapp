@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, Weight, Syringe, DollarSign, ShoppingCart, ClipboardList, Download } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import GainIndicator from "@/components/shared/GainIndicator";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, formatWeight, ESTADO_ANIMAL, SEXO_ANIMAL, TIPO_TRATAMIENTO, TIPO_PROCEDIMIENTO, CATEGORIA_GASTOS } from "@/lib/helpers";
 import { exportToCsv } from "@/lib/csv";
 import { calcGainFromPesajes, classifyGain, getThresholds, isPotro } from "@/lib/gananciaUtils";
@@ -134,6 +135,15 @@ export default function AnimalDetail() {
           <Link to={`/animales/${id}/editar`}>
             <Button variant="outline" className="gap-2"><Pencil className="w-4 h-4" /> Editar</Button>
           </Link>
+          <DeleteConfirmButton
+            entityName="Animal"
+            recordId={id}
+            recordLabel={`el animal #${animal.numero}`}
+            warningText="Eliminar este animal también puede afectar sus pesajes, tratamientos, procedimientos, ventas, reproducción y reportes. Considera marcarlo como inactivo desde Editar si quieres conservar el historial."
+            queryKeysToInvalidate={["animals"]}
+            iconOnly={false}
+            onDeleted={() => navigate("/animales")}
+          />
         </div>
       </div>
 

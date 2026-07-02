@@ -13,6 +13,7 @@ import { ClipboardList, Plus, Filter } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, TIPO_PROCEDIMIENTO, PROCEDIMIENTOS_POR_ESPECIE } from "@/lib/helpers";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -214,7 +215,10 @@ export default function Procedimientos() {
                       </p>
                     </div>
                   </div>
-                  {p.costo > 0 && <p className="font-bold">{formatCurrency(p.costo)}</p>}
+                  <div className="flex items-center gap-1">
+                    {p.costo > 0 && <p className="font-bold">{formatCurrency(p.costo)}</p>}
+                    <DeleteConfirmButton entityName="Procedimiento" recordId={p.id} recordLabel="este procedimiento" queryKeysToInvalidate={["procedimientos"]} />
+                  </div>
                 </div>
               </Card>
             );

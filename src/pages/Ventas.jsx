@@ -15,6 +15,7 @@ import EmptyState from "@/components/shared/EmptyState";
 import { formatCurrency, formatWeight, TIPO_VENTA } from "@/lib/helpers";
 import CsvExportButton from "@/components/shared/CsvExportButton";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -170,7 +171,16 @@ export default function Ventas() {
                       </p>
                     </div>
                   </div>
-                  <p className="font-bold text-lg">{formatCurrency(v.precio_total)}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="font-bold text-lg">{formatCurrency(v.precio_total)}</p>
+                    <DeleteConfirmButton
+                      entityName="Venta"
+                      recordId={v.id}
+                      recordLabel="esta venta"
+                      warningText="Si esta venta fue creada por error, al eliminarla el animal seguirá marcado como vendido. Debes cambiar manualmente el estado del animal a Activo si corresponde."
+                      queryKeysToInvalidate={["ventas", "animals"]}
+                    />
+                  </div>
                 </div>
               </Card>
             );

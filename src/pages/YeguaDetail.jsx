@@ -16,6 +16,7 @@ import {
 import PageHeader from "@/components/shared/PageHeader";
 import EstadoReproductivoBadge from "@/components/caballos/EstadoReproductivoBadge";
 import EstadoCriaBadge from "@/components/caballos/EstadoCriaBadge";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import {
   ESTADO_REPRODUCTIVO, RESULTADO_INSEMINACION, RESULTADO_INSEMINACION_COLORS,
   METODO_CONFIRMACION, RESULTADO_PARTO, RESULTADO_PARTO_COLORS,
@@ -115,9 +116,19 @@ export default function YeguaDetail() {
             </div>
           </div>
         </div>
-        <Button variant="outline" onClick={() => navigate(`/caballos/yeguas/${id}/editar`)} className="gap-2">
-          <Pencil className="w-4 h-4" /> Editar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate(`/caballos/yeguas/${id}/editar`)} className="gap-2">
+            <Pencil className="w-4 h-4" /> Editar
+          </Button>
+          <DeleteConfirmButton
+            entityName="Yegua"
+            recordId={id}
+            recordLabel={`la yegua "${yegua.nombre}"`}
+            queryKeysToInvalidate={["yeguas"]}
+            iconOnly={false}
+            onDeleted={() => navigate("/caballos/yeguas")}
+          />
+        </div>
       </div>
 
       {/* Estado y info básica */}

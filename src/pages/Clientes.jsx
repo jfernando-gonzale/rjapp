@@ -15,6 +15,7 @@ import { TIPO_CLIENTE } from "@/lib/helpers";
 import CsvExportButton from "@/components/shared/CsvExportButton";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import DepartamentoMunicipioFields from "@/components/shared/DepartamentoMunicipioFields";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 
 const TIPO_COLORS = {
   bovinos: "bg-amber-100 text-amber-800",
@@ -145,6 +146,7 @@ export default function Clientes() {
                   )}
                   {c.finca_criadero && <p className="text-xs text-muted-foreground mt-1 truncate">{c.finca_criadero}</p>}
                 </div>
+                <DeleteConfirmButton entityName="Cliente" recordId={c.id} recordLabel={`el cliente "${c.nombre}"`} queryKeysToInvalidate={["clientes"]} />
               </div>
             </Card>
           ))}

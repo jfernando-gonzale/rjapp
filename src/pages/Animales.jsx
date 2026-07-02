@@ -13,6 +13,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import GainIndicator from "@/components/shared/GainIndicator";
 import CsvExportButton from "@/components/shared/CsvExportButton";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, formatWeight, daysBetween, calcDailyGain, ESTADO_ANIMAL, SEXO_ANIMAL } from "@/lib/helpers";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -222,7 +223,16 @@ export default function Animales() {
                       <p className="text-xs text-muted-foreground">{getFincaName(animal.finca_id)} • {getLoteName(animal.lote_id)}</p>
                       {animal.raza && <p className="text-xs text-muted-foreground">{animal.raza}</p>}
                     </div>
-                    <StatusBadge status={animal.estado} label={ESTADO_ANIMAL[animal.estado]} />
+                    <div className="flex items-center gap-1">
+                      <StatusBadge status={animal.estado} label={ESTADO_ANIMAL[animal.estado]} />
+                      <DeleteConfirmButton
+                        entityName="Animal"
+                        recordId={animal.id}
+                        recordLabel={`el animal #${animal.numero}`}
+                        warningText="Eliminar este animal también puede afectar sus pesajes, tratamientos, procedimientos, ventas, reproducción y reportes. Considera marcarlo como inactivo desde Editar si quieres conservar el historial."
+                        queryKeysToInvalidate={["animals"]}
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2 mt-3">
                     <div className="text-center bg-muted/50 rounded-lg py-1.5">
@@ -279,9 +289,18 @@ export default function Animales() {
                     <td className="p-3">{gain != null ? <GainIndicator dailyGain={gain} /> : <span className="text-muted-foreground text-xs">—</span>}</td>
                     <td className="p-3"><StatusBadge status={animal.estado} label={ESTADO_ANIMAL[animal.estado]} /></td>
                     <td className="p-3 text-center">
-                      <Link to={`/animales/${animal.id}`}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="w-4 h-4" /></Button>
-                      </Link>
+                      <div className="flex items-center justify-center gap-1">
+                        <Link to={`/animales/${animal.id}`}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="w-4 h-4" /></Button>
+                        </Link>
+                        <DeleteConfirmButton
+                          entityName="Animal"
+                          recordId={animal.id}
+                          recordLabel={`el animal #${animal.numero}`}
+                          warningText="Eliminar este animal también puede afectar sus pesajes, tratamientos, procedimientos, ventas, reproducción y reportes."
+                          queryKeysToInvalidate={["animals"]}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );

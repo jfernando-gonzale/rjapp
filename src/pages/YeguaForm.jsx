@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PageHeader from "@/components/shared/PageHeader";
 import { ESTADO_REPRODUCTIVO } from "@/lib/caballos";
 import RazaEquinaSelect from "@/components/shared/RazaEquinaSelect";
+import FechaNacimientoEdad from "@/components/shared/FechaNacimientoEdad";
 import { toast } from "sonner";
 
 export default function YeguaForm() {
@@ -46,6 +47,7 @@ export default function YeguaForm() {
         lote_id: y.lote_id || "",
         raza: y.raza || "",
         color: y.color || "",
+        fecha_nacimiento: y.fecha_nacimiento || "",
         edad_aproximada: y.edad_aproximada || "",
         estado_reproductivo: y.estado_reproductivo || "vacia",
         observaciones: y.observaciones || "",
@@ -58,6 +60,7 @@ export default function YeguaForm() {
       lote_id: "",
       raza: "",
       color: "",
+      fecha_nacimiento: "",
       edad_aproximada: "",
       estado_reproductivo: "vacia",
       observaciones: "",
@@ -77,6 +80,7 @@ export default function YeguaForm() {
         lote_id: y.lote_id || "",
         raza: y.raza || "",
         color: y.color || "",
+        fecha_nacimiento: y.fecha_nacimiento || "",
         edad_aproximada: y.edad_aproximada || "",
         estado_reproductivo: y.estado_reproductivo || "vacia",
         observaciones: y.observaciones || "",
@@ -170,16 +174,19 @@ export default function YeguaForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="edad">Edad aproximada</Label>
-              <Input
-                id="edad"
-                value={formData.edad_aproximada}
-                onChange={(e) => setFormData({ ...formData, edad_aproximada: e.target.value })}
-                placeholder="Ej: 5 años"
-              />
-            </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FechaNacimientoEdad
+              fechaNacimiento={formData.fecha_nacimiento}
+              edad={formData.edad_aproximada}
+              onChangeFecha={(v) => setFormData({ ...formData, fecha_nacimiento: v })}
+              onChangeEdad={(v) => setFormData({ ...formData, edad_aproximada: v })}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Si conoces la fecha de nacimiento, la edad se calculará automáticamente. Si no la conoces, puedes escribir una edad aproximada.
+          </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

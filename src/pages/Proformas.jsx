@@ -12,6 +12,7 @@ import { FileText, Plus, Trash2, Download, Copy } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, TIPO_VENTA } from "@/lib/helpers";
 import { exportToCsv } from "@/lib/csv";
 import { format } from "date-fns";
@@ -226,6 +227,7 @@ export default function Proformas() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => exportProforma(p)} title="Exportar CSV"><Download className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => duplicate(p)} title="Duplicar"><Copy className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)} title="Editar"><FileText className="w-4 h-4" /></Button>
+                    <DeleteConfirmButton entityName="Proforma" recordId={p.id} recordLabel={`la proforma ${p.numero}`} queryKeysToInvalidate={["proformas"]} />
                   </div>
                 </div>
               </Card>

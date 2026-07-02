@@ -13,6 +13,7 @@ import { Syringe, Plus } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { formatCurrency, TIPO_TRATAMIENTO } from "@/lib/helpers";
 import { FRECUENCIA_TRAT_LABELS, calcularProximaFechaTrat } from "@/lib/calendario";
 import { format } from "date-fns";
@@ -160,7 +161,10 @@ export default function Tratamientos() {
                       </p>
                     </div>
                   </div>
-                  {t.costo > 0 && <p className="font-bold">{formatCurrency(t.costo)}</p>}
+                  <div className="flex items-center gap-1">
+                    {t.costo > 0 && <p className="font-bold">{formatCurrency(t.costo)}</p>}
+                    <DeleteConfirmButton entityName="Tratamiento" recordId={t.id} recordLabel="este tratamiento" queryKeysToInvalidate={["tratamientos"]} />
+                  </div>
                 </div>
               </Card>
             );

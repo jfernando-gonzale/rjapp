@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Plus, Truck, TestTube, AlertTriangle, Edit, MapPin, Package } from "lucide-react";
 import { formatCurrency } from "@/lib/helpers";
 import { useToast } from "@/components/ui/use-toast";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -88,9 +89,19 @@ export default function ReproductorDetail() {
             <p className="text-muted-foreground">{RAZAS[rep.raza] || rep.raza} {rep.color ? `· ${rep.color}` : ""} {rep.registro ? `· Reg: ${rep.registro}` : ""}</p>
             <p className="text-sm text-muted-foreground mt-1">{getFinca(rep.finca_id)} {rep.ubicacion ? `· ${rep.ubicacion}` : ""} {rep.edad_aproximada ? `· ${rep.edad_aproximada}` : ""}</p>
           </div>
-          <Link to={`/reproductores/${id}/editar`}>
-            <Button variant="outline" className="gap-2"><Edit className="w-4 h-4" /> Editar</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to={`/reproductores/${id}/editar`}>
+              <Button variant="outline" className="gap-2"><Edit className="w-4 h-4" /> Editar</Button>
+            </Link>
+            <DeleteConfirmButton
+              entityName="Reproductor"
+              recordId={id}
+              recordLabel={`el reproductor "${rep.nombre}"`}
+              queryKeysToInvalidate={["reproductores"]}
+              iconOnly={false}
+              onDeleted={() => navigate("/reproductores")}
+            />
+          </div>
         </div>
       </Card>
 

@@ -12,6 +12,7 @@ import GainIndicator from "@/components/shared/GainIndicator";
 import { formatWeight } from "@/lib/helpers";
 import CsvExportButton from "@/components/shared/CsvExportButton";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
+import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -152,7 +153,10 @@ export default function Pesajes() {
                       </p>
                     </div>
                   </div>
-                  {p.ganancia_diaria != null && <GainIndicator dailyGain={p.ganancia_diaria} />}
+                  <div className="flex items-center gap-1">
+                    {p.ganancia_diaria != null && <GainIndicator dailyGain={p.ganancia_diaria} />}
+                    <DeleteConfirmButton entityName="Pesaje" recordId={p.id} recordLabel="este pesaje" queryKeysToInvalidate={["pesajes"]} />
+                  </div>
                 </div>
               </Card>
             );
