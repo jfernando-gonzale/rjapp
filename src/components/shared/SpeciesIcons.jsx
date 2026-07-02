@@ -17,16 +17,18 @@ export const CowIcon = (props) => (
 
 export const SheepIcon = (props) => (
   <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="16" cy="12" r="7"/>
-    <circle cx="8" cy="10" r="3"/>
-    <circle cx="24" cy="10" r="3"/>
-    <circle cx="11" cy="6" r="2.8"/>
-    <circle cx="21" cy="6" r="2.8"/>
+    <circle cx="16" cy="13" r="6.5"/>
+    <circle cx="9" cy="11" r="3"/>
+    <circle cx="23" cy="11" r="3"/>
+    <circle cx="12" cy="7" r="2.8"/>
+    <circle cx="20" cy="7" r="2.8"/>
     <circle cx="16" cy="5" r="2.5"/>
     <ellipse cx="16" cy="17" rx="4" ry="3"/>
     <circle cx="14.2" cy="16.5" r="0.8" fill="currentColor" stroke="none"/>
     <circle cx="17.8" cy="16.5" r="0.8" fill="currentColor" stroke="none"/>
     <path d="M15 19 Q16 19.8 17 19"/>
+    <path d="M12.5 13 Q9.5 14 10 16.5"/>
+    <path d="M19.5 13 Q22.5 14 22 16.5"/>
     <path d="M12 20 L12 28"/>
     <path d="M15 20 L15 28"/>
     <path d="M17 20 L17 28"/>
@@ -36,15 +38,26 @@ export const SheepIcon = (props) => (
 
 export const HorseIcon = (props) => (
   <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M16 9 Q10 9 8 15 L8 25"/>
-    <path d="M16 9 Q22 9 24 15 L24 25"/>
-    <path d="M8 15 Q16 18 24 15"/>
-    <circle cx="11" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
-    <circle cx="21" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
-    <path d="M16 9 L16 5"/>
-    <path d="M16 5 Q20 3 22 5 L20 9"/>
-    <path d="M13 23 Q16 25 19 23"/>
-    <path d="M8 25 L8 29"/><path d="M11 25 L11 29"/>
-    <path d="M21 25 L21 29"/><path d="M24 25 L24 29"/>
+    <path d="M21 7 L19 2 L17 7"/>
+    <path d="M21 7 Q14 6 10 10 Q7 13 7 17"/>
+    <path d="M7 17 Q7 20 10 21"/>
+    <path d="M10 21 Q13 22 14 25 L14 28"/>
+    <path d="M14 28 L21 28 L21 7"/>
+    <circle cx="16" cy="12" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="9" cy="16" r="0.7" fill="currentColor" stroke="none"/>
+    <path d="M8 19 Q10 20 12 19"/>
+    <path d="M21 9 L25 7"/>
+    <path d="M21 13 L25 12"/>
+    <path d="M21 17 L25 18"/>
+    <path d="M21 21 L25 23"/>
   </svg>
 );
+
+export const SPECIES_EMOJI = {
+  bovino: "🐄",
+  ovino: "🐑",
+  equino: "🐴",
+  all: "🐾",
+};
+
+export const getSpeciesEmoji = (especie) => SPECIES_EMOJI[especie] || "🐾";

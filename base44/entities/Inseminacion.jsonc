@@ -19,7 +19,8 @@
       "type": "string",
       "enum": [
         "inseminacion_artificial",
-        "monta_natural"
+        "monta_natural",
+        "transferencia_embriones"
       ],
       "default": "monta_natural",
       "description": "Tipo de inseminaci\u00f3n"

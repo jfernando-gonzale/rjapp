@@ -37,6 +37,23 @@ export const ESTADO_CRIA_COLORS = {
 export const TIPO_INSEMINACION = {
   inseminacion_artificial: "Inseminación artificial",
   monta_natural: "Monta natural",
+  transferencia_embriones: "Transferencia de embriones",
+};
+
+export const TIPO_YEGUA = {
+  reproductiva: "Reproductiva",
+  donadora: "Donadora",
+  receptora: "Receptora",
+  donadora_receptora: "Donadora y receptora",
+  otra: "Otra",
+};
+
+export const TIPO_YEGUA_COLORS = {
+  reproductiva: "bg-emerald-100 text-emerald-700",
+  donadora: "bg-purple-100 text-purple-700",
+  receptora: "bg-blue-100 text-blue-700",
+  donadora_receptora: "bg-indigo-100 text-indigo-700",
+  otra: "bg-slate-100 text-slate-700",
 };
 
 export const RESULTADO_INSEMINACION = {

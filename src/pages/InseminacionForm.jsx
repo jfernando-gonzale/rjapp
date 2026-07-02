@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
-import { TIPO_INSEMINACION, RESULTADO_INSEMINACION } from "@/lib/caballos";
+import { TIPO_INSEMINACION, RESULTADO_INSEMINACION, TIPO_YEGUA } from "@/lib/caballos";
 import { getTerminologia } from "@/lib/reproduccion";
 import { toast } from "sonner";
 
@@ -26,6 +26,7 @@ export default function InseminacionForm() {
 
   // Para equinos usamos la entidad Yegua; para bovinos/ovinos usamos Animal (hembras activas de la especie)
   const esEquino = especie === "equino";
+  const [rolTransferencia, setRolTransferencia] = useState("donadora");
 
   const { data: yeguas = [] } = useQuery({
     queryKey: ["yeguas"],
@@ -46,8 +47,6 @@ export default function InseminacionForm() {
     (a.sexo === "hembra" || !a.sexo)
   );
 
-  const hembras = esEquino ? yeguas : hembrasEspecie;
-
   const [formData, setFormData] = useState({
     yegua_id: yeguaIdParam || "",
     fecha: new Date().toISOString().split("T")[0],
@@ -57,6 +56,20 @@ export default function InseminacionForm() {
     resultado: "pendiente",
     observaciones: "",
   });
+
+  const hembras = useMemo(() => {
+    if (esEquino && formData.tipo === "transferencia_embriones") {
+      const tiposPrioritarios = rolTransferencia === "donadora"
+        ? ["donadora", "donadora_receptora"]
+        : ["receptora", "donadora_receptora"];
+      return [...yeguas].sort((a, b) => {
+        const aMatch = tiposPrioritarios.includes(a.tipo_yegua) ? 0 : 1;
+        const bMatch = tiposPrioritarios.includes(b.tipo_yegua) ? 0 : 1;
+        return aMatch - bMatch;
+      });
+    }
+    return esEquino ? yeguas : hembrasEspecie;
+  }, [yeguas, hembrasEspecie, esEquino, formData.tipo, rolTransferencia]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -131,7 +144,11 @@ export default function InseminacionForm() {
               </SelectTrigger>
               <SelectContent>
                 {hembras.map(h => (
-                  <SelectItem key={h.id} value={h.id}>{h.nombre || h.numero}</SelectItem>
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.nombre || h.numero}
+                    {esEquino && h.tipo_yegua && h.tipo_yegua !== "reproductiva" ? ` (${TIPO_YEGUA[h.tipo_yegua]})` : ""}
+                    {esEquino && !h.tipo_yegua ? " (Sin tipo)" : ""}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -165,13 +182,31 @@ export default function InseminacionForm() {
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
-            </div>
-          </div>
+                </Select>
+                </div>
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="reproductor">{T.macho}</Label>
+                {esEquino && formData.tipo === "transferencia_embriones" && (
+                <div>
+                <Label>Rol de la yegua</Label>
+                <Select value={rolTransferencia} onValueChange={setRolTransferencia}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="donadora">Donadora (provee el embrión)</SelectItem>
+                  <SelectItem value="receptora">Receptora (gesta el embrión)</SelectItem>
+                </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                Las yeguas {rolTransferencia === "donadora" ? "donadoras" : "receptoras"} aparecen primero en la lista.
+                </p>
+                </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                <Label htmlFor="reproductor">{T.macho}</Label>
               <Input
                 id="reproductor"
                 value={formData.reproductor}

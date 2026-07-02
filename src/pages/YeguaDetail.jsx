@@ -21,7 +21,7 @@ import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 import {
   ESTADO_REPRODUCTIVO, RESULTADO_INSEMINACION, RESULTADO_INSEMINACION_COLORS,
   METODO_CONFIRMACION, RESULTADO_PARTO, RESULTADO_PARTO_COLORS,
-  SEXO_CRIA, TIPO_INSEMINACION, NUEVA_ACCION_CELO,
+  SEXO_CRIA, TIPO_INSEMINACION, NUEVA_ACCION_CELO, TIPO_YEGUA, TIPO_YEGUA_COLORS,
   calcDiasGestacion, calcDiasFaltantesParto, calcFechaDesteteSugerida
 } from "@/lib/caballos";
 import { toast } from "sonner";
@@ -136,6 +136,11 @@ export default function YeguaDetail() {
       <Card className="p-5">
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <EstadoReproductivoBadge estado={yegua.estado_reproductivo} className="text-sm px-3 py-1" />
+          {yegua.tipo_yegua && (
+            <Badge className={`text-sm px-3 py-1 ${TIPO_YEGUA_COLORS[yegua.tipo_yegua] || ""}`}>
+              {TIPO_YEGUA[yegua.tipo_yegua]}
+            </Badge>
+          )}
           {yegua.raza && <Badge variant="outline">{yegua.raza}</Badge>}
           {yegua.color && <Badge variant="outline">{yegua.color}</Badge>}
           {finca && <Badge variant="outline">{finca.nombre}</Badge>}

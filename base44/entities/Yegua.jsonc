@@ -48,6 +48,18 @@
       "default": "vacia",
       "description": "Estado reproductivo actual"
     },
+    "tipo_yegua": {
+      "type": "string",
+      "enum": [
+        "reproductiva",
+        "donadora",
+        "receptora",
+        "donadora_receptora",
+        "otra"
+      ],
+      "default": "reproductiva",
+      "description": "Tipo de yegua: reproductiva, donadora (provee embriones), receptora (gesta embriones), donadora y receptora, u otra"
+    },
     "fecha_ultima_inseminacion": {
       "type": "string",
       "format": "date",

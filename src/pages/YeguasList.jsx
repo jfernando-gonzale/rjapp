@@ -15,7 +15,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import EstadoReproductivoBadge from "@/components/caballos/EstadoReproductivoBadge";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
-import { ESTADO_REPRODUCTIVO, calcDiasFaltantesParto } from "@/lib/caballos";
+import { ESTADO_REPRODUCTIVO, TIPO_YEGUA, TIPO_YEGUA_COLORS, calcDiasFaltantesParto } from "@/lib/caballos";
 import { toast } from "sonner";
 
 export default function YeguasList() {
@@ -23,6 +23,7 @@ export default function YeguasList() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("all");
+  const [filtroTipo, setFiltroTipo] = useState("all");
   const [filtroFinca, setFiltroFinca] = useState("all");
   const [viewMode, setViewMode] = useState("cards");
 
@@ -53,6 +54,11 @@ export default function YeguasList() {
   // Filtros
   const yeguasFiltradas = yeguas.filter(y => {
     if (filtroEstado !== "all" && y.estado_reproductivo !== filtroEstado) return false;
+    if (filtroTipo !== "all") {
+      if (filtroTipo === "sin_tipo") {
+        if (y.tipo_yegua) return false;
+      } else if (y.tipo_yegua !== filtroTipo) return false;
+    }
     if (filtroFinca !== "all" && y.finca_id !== filtroFinca) return false;
     if (search) {
       const s = search.toLowerCase();
@@ -101,6 +107,18 @@ export default function YeguasList() {
             {Object.entries(ESTADO_REPRODUCTIVO).map(([key, label]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+          <SelectTrigger className="w-36 sm:w-40">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los tipos</SelectItem>
+            {Object.entries(TIPO_YEGUA).map(([key, label]) => (
+              <SelectItem key={key} value={key}>{label}</SelectItem>
+            ))}
+            <SelectItem value="sin_tipo">Sin tipo definido</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex border rounded-md overflow-hidden">
@@ -155,7 +173,15 @@ export default function YeguasList() {
                       {yegua.numero && <p className="text-xs text-muted-foreground">#{yegua.numero}</p>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-wrap justify-end">
+                    {yegua.tipo_yegua && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${TIPO_YEGUA_COLORS[yegua.tipo_yegua] || "bg-slate-100 text-slate-600"}`}>
+                        {TIPO_YEGUA[yegua.tipo_yegua] || "Sin tipo"}
+                      </span>
+                    )}
+                    {!yegua.tipo_yegua && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-500">Sin tipo</span>
+                    )}
                     <EstadoReproductivoBadge estado={yegua.estado_reproductivo} />
                     <DeleteConfirmButton entityName="Yegua" recordId={yegua.id} recordLabel={`la yegua "${yegua.nombre}"`} queryKeysToInvalidate={["yeguas"]} />
                   </div>
@@ -206,6 +232,7 @@ export default function YeguasList() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Finca</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>Últ. Inseminación</TableHead>
                 <TableHead>Parto probable</TableHead>
                 <TableHead>Últ. parto</TableHead>
@@ -228,6 +255,15 @@ export default function YeguasList() {
                     </TableCell>
                     <TableCell className="text-sm">{fincaNombre(yegua.finca_id) || "-"}</TableCell>
                     <TableCell><EstadoReproductivoBadge estado={yegua.estado_reproductivo} /></TableCell>
+                    <TableCell className="text-sm">
+                      {yegua.tipo_yegua ? (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${TIPO_YEGUA_COLORS[yegua.tipo_yegua] || "bg-slate-100 text-slate-600"}`}>
+                          {TIPO_YEGUA[yegua.tipo_yegua]}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">Sin tipo</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm">{ultInsem?.fecha || "-"}</TableCell>
                     <TableCell className="text-sm">
                       {yegua.fecha_probable_parto ? (

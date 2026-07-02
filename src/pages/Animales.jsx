@@ -201,7 +201,7 @@ export default function Animales() {
       </div>
 
       {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={() => <span className="text-4xl">🐄</span>} title="Sin animales" description="Registra tu primer animal" actionLabel="Nuevo Animal" onAction={() => window.location.href = "/animales/nuevo"} />
+        <EmptyState icon={() => <span className="text-4xl">{filterEspecie === "bovino" ? "🐄" : filterEspecie === "ovino" ? "🐑" : filterEspecie === "equino" ? "🐴" : "🐾"}</span>} title="Sin animales" description="Registra tu primer animal" actionLabel="Nuevo Animal" onAction={() => window.location.href = "/animales/nuevo"} />
       ) : viewMode === "cards" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map(animal => {

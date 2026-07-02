@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
-import { ESTADO_REPRODUCTIVO } from "@/lib/caballos";
+import { ESTADO_REPRODUCTIVO, TIPO_YEGUA } from "@/lib/caballos";
 import RazaEquinaSelect from "@/components/shared/RazaEquinaSelect";
 import FechaNacimientoEdad from "@/components/shared/FechaNacimientoEdad";
 import { toast } from "sonner";
@@ -50,6 +50,7 @@ export default function YeguaForm() {
         fecha_nacimiento: y.fecha_nacimiento || "",
         edad_aproximada: y.edad_aproximada || "",
         estado_reproductivo: y.estado_reproductivo || "vacia",
+        tipo_yegua: y.tipo_yegua || "reproductiva",
         observaciones: y.observaciones || "",
       };
     }
@@ -63,6 +64,7 @@ export default function YeguaForm() {
       fecha_nacimiento: "",
       edad_aproximada: "",
       estado_reproductivo: "vacia",
+      tipo_yegua: "reproductiva",
       observaciones: "",
     };
   });
@@ -83,6 +85,7 @@ export default function YeguaForm() {
         fecha_nacimiento: y.fecha_nacimiento || "",
         edad_aproximada: y.edad_aproximada || "",
         estado_reproductivo: y.estado_reproductivo || "vacia",
+        tipo_yegua: y.tipo_yegua || "reproductiva",
         observaciones: y.observaciones || "",
       });
     }
@@ -172,12 +175,29 @@ export default function YeguaForm() {
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
-            </div>
-          </div>
+                </Select>
+                </div>
+                <div>
+                <Label>Tipo de yegua</Label>
+                <Select
+                value={formData.tipo_yegua}
+                onValueChange={(v) => setFormData({ ...formData, tipo_yegua: v })}
+                >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TIPO_YEGUA).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Donadora: yegua genética de la que se obtiene el embrión. Receptora: yegua que recibe y gesta el embrión.</p>
+                </div>
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FechaNacimientoEdad
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FechaNacimientoEdad
               fechaNacimiento={formData.fecha_nacimiento}
               edad={formData.edad_aproximada}
               onChangeFecha={(v) => setFormData({ ...formData, fecha_nacimiento: v })}
