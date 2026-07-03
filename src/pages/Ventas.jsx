@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate, Link } from "react-router-dom";
@@ -49,6 +49,13 @@ export default function Ventas() {
   // Cálculo automático
   const calcTotal = pesoVenta && precioKilo ? parseFloat(pesoVenta) * parseFloat(precioKilo) : null;
   const calcKilo = pesoVenta && precioTotal && !precioKilo ? Math.round(parseFloat(precioTotal) / parseFloat(pesoVenta)) : null;
+
+  // Auto-calcular precio total = peso × precio/kilo
+  useEffect(() => {
+    if (pesoVenta && precioKilo && parseFloat(pesoVenta) > 0 && parseFloat(precioKilo) > 0) {
+      setPrecioTotal(Math.round(parseFloat(pesoVenta) * parseFloat(precioKilo)).toString());
+    }
+  }, [pesoVenta, precioKilo]);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -233,8 +240,9 @@ export default function Ventas() {
               </div>
             )}
             <div>
-              <Label>Precio total de venta</Label>
-              <Input name="precio_total" type="number" value={precioTotal} onChange={e => setPrecioTotal(e.target.value)} placeholder={calcTotal ? calcTotal.toString() : "Ej: 3.375.000"} />
+              <Label>Precio total de venta (auto)</Label>
+              <Input name="precio_total" type="number" value={precioTotal} onChange={e => setPrecioTotal(e.target.value)} placeholder={calcTotal ? calcTotal.toString() : "Ej: 3.375.000"} className={calcTotal != null ? "border-emerald-400 bg-emerald-50" : ""} />
+              {calcTotal != null && <p className="text-xs text-emerald-600 mt-0.5">✓ Calculado automáticamente (peso × precio/kilo). Puedes ajustarlo si es necesario.</p>}
             </div>
             <div>
               <Label>Comprador</Label>

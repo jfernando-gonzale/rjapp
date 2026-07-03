@@ -20,8 +20,8 @@ export default function AnimalForm() {
   const [moreDetails, setMoreDetails] = useState(false);
   const [especie, setEspecie] = useState("bovino");
   const [pesoCompra, setPesoCompra] = useState("");
-  const [precioCompra, setPrecioCompra] = useState("");
   const [precioKilo, setPrecioKilo] = useState("");
+  const [precioCompra, setPrecioCompra] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [edadAprox, setEdadAprox] = useState("");
 
@@ -46,13 +46,13 @@ export default function AnimalForm() {
     }
   }, [animal]);
 
-  // Auto-calcular precio/kilo
+  // Auto-calcular precio total = peso × precio/kilo
   useEffect(() => {
-    if (pesoCompra && precioCompra && parseFloat(pesoCompra) > 0) {
-      const kilo = Math.round(parseFloat(precioCompra) / parseFloat(pesoCompra));
-      setPrecioKilo(kilo.toString());
+    if (pesoCompra && precioKilo && parseFloat(pesoCompra) > 0 && parseFloat(precioKilo) > 0) {
+      const total = Math.round(parseFloat(pesoCompra) * parseFloat(precioKilo));
+      setPrecioCompra(total.toString());
     }
-  }, [pesoCompra, precioCompra]);
+  }, [pesoCompra, precioKilo]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Animal.create(data),
@@ -81,9 +81,9 @@ export default function AnimalForm() {
         }
       }
     }
-    // Auto precio kilo
-    if (data.peso_compra && data.precio_compra && !data.precio_kilo_compra) {
-      data.precio_kilo_compra = Math.round(data.precio_compra / data.peso_compra);
+    // Auto precio total = peso × precio/kilo
+    if (data.peso_compra && data.precio_kilo_compra && !data.precio_compra) {
+      data.precio_compra = Math.round(data.peso_compra * data.precio_kilo_compra);
     }
     // Set initial weight
     if (data.peso_compra && !isEditing) {
@@ -239,27 +239,27 @@ export default function AnimalForm() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Precio de compra total ($)</Label>
-              <Input
-                name="precio_compra"
-                type="number"
-                value={precioCompra}
-                onChange={e => setPrecioCompra(e.target.value)}
-                placeholder="Ej: 1.500.000"
-              />
-            </div>
-            <div>
-              <Label>Precio por kilo (auto)</Label>
+              <Label>Precio por kilo ($/kg)</Label>
               <Input
                 name="precio_kilo_compra"
                 type="number"
                 value={precioKilo}
                 onChange={e => setPrecioKilo(e.target.value)}
-                placeholder="Calculado automático"
-                className={pesoCompra && precioCompra ? "border-amber-400 bg-amber-50" : ""}
+                placeholder="Ej: 7500"
               />
-              {pesoCompra && precioCompra && parseFloat(pesoCompra) > 0 && (
-                <p className="text-xs text-amber-600 mt-0.5">✓ Calculado automáticamente</p>
+            </div>
+            <div>
+              <Label>Precio total de compra (auto)</Label>
+              <Input
+                name="precio_compra"
+                type="number"
+                value={precioCompra}
+                onChange={e => setPrecioCompra(e.target.value)}
+                placeholder="Calculado automático"
+                className={pesoCompra && precioKilo ? "border-amber-400 bg-amber-50" : ""}
+              />
+              {pesoCompra && precioKilo && parseFloat(pesoCompra) > 0 && parseFloat(precioKilo) > 0 && (
+                <p className="text-xs text-amber-600 mt-0.5">✓ Calculado automáticamente (peso × precio/kilo). Puedes ajustarlo si es necesario.</p>
               )}
             </div>
           </div>

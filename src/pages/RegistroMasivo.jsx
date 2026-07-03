@@ -35,7 +35,7 @@ export default function RegistroMasivo() {
   const [estado, setEstado] = useState("activo");
   const [fechaCompra, setFechaCompra] = useState(today);
   const [vendedor, setVendedor] = useState("");
-  const [precioTotalGrupo, setPrecioTotalGrupo] = useState("");
+  const [precioKilo, setPrecioKilo] = useState("");
   const [observaciones, setObservaciones] = useState("");
 
   // Filas individuales
@@ -52,27 +52,18 @@ export default function RegistroMasivo() {
   const validRows = rows.filter((r) => r.numero.trim() !== "");
   const numAnimales = validRows.length;
 
-  const precioPromedio = useMemo(() => {
-    const total = parseFloat(precioTotalGrupo);
-    if (!total || numAnimales === 0) return null;
-    return total / numAnimales;
-  }, [precioTotalGrupo, numAnimales]);
-
-  // Costo distribuido por peso (proporcional)
+  // Precio total por animal = peso × precio/kilo (o precio individual si se especifica)
   const getCostoPorAnimal = (row) => {
-    const total = parseFloat(precioTotalGrupo);
-    if (!total) return parseFloat(row.precio_individual) || null;
-    const pesoTotal = validRows.reduce((s, r) => s + (parseFloat(r.peso_compra) || 0), 0);
+    const indiv = parseFloat(row.precio_individual);
+    if (indiv) return indiv;
     const peso = parseFloat(row.peso_compra);
-    if (pesoTotal > 0 && peso > 0) return (total * peso) / pesoTotal;
-    return precioPromedio;
+    const kilo = parseFloat(precioKilo);
+    if (peso && kilo) return Math.round(peso * kilo);
+    return null;
   };
 
   const getPrecioKilo = (row) => {
-    const costo = getCostoPorAnimal(row);
-    const peso = parseFloat(row.peso_compra);
-    if (!costo || !peso) return null;
-    return costo / peso;
+    return parseFloat(precioKilo) || null;
   };
 
   const updateRow = (idx, field, value) => {
@@ -116,7 +107,7 @@ export default function RegistroMasivo() {
     try {
       const registros = validRows.map((r) => {
         const costo = getCostoPorAnimal(r);
-        const precioKilo = getPrecioKilo(r);
+        const kilo = getPrecioKilo(r);
         return {
           especie,
           numero: r.numero.trim(),
@@ -128,7 +119,7 @@ export default function RegistroMasivo() {
           fecha_compra: fechaCompra || undefined,
           peso_compra: parseFloat(r.peso_compra) || undefined,
           precio_compra: costo || undefined,
-          precio_kilo_compra: precioKilo || undefined,
+          precio_kilo_compra: kilo || undefined,
           vendedor: vendedor || undefined,
           color: r.color || undefined,
           observaciones: [observaciones, r.observacion].filter(Boolean).join(" · ") || undefined,
@@ -137,8 +128,8 @@ export default function RegistroMasivo() {
 
       const created = await base44.entities.Animal.bulkCreate(registros);
 
-      // Gasto de compra (si hay precio total)
-      const total = parseFloat(precioTotalGrupo);
+      // Gasto de compra (suma de precios individuales)
+      const total = registros.reduce((s, r) => s + (r.precio_compra || 0), 0);
       if (total && created.length > 0) {
         await base44.entities.Gasto.create({
           fecha: fechaCompra || today,
@@ -281,10 +272,10 @@ export default function RegistroMasivo() {
             <Input value={vendedor} onChange={(e) => setVendedor(e.target.value)} placeholder="Nombre" />
           </div>
           <div>
-            <Label className="text-xs mb-1 block">Precio total del grupo</Label>
-            <Input type="number" value={precioTotalGrupo} onChange={(e) => setPrecioTotalGrupo(e.target.value)} placeholder="0" />
-            {precioPromedio != null && (
-              <p className="text-xs text-amber-700 mt-1">Precio promedio por animal: {formatCurrency(precioPromedio)}</p>
+            <Label className="text-xs mb-1 block">Precio por kilo común ($/kg)</Label>
+            <Input type="number" value={precioKilo} onChange={(e) => setPrecioKilo(e.target.value)} placeholder="Ej: 7500" />
+            {numAnimales > 0 && (
+              <p className="text-xs text-amber-700 mt-1">Total del lote: {formatCurrency(validRows.reduce((s, r) => s + (getCostoPorAnimal(r) || 0), 0))}</p>
             )}
           </div>
           <div>
