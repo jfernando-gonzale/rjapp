@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, ArrowLeft, Copy, Upload, CheckCircle2 } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
-import { formatCurrency, SEXO_ANIMAL, getRazasByEspecie, ESPECIES } from "@/lib/helpers";
+import { formatCurrency, SEXO_ANIMAL, getRazasByEspecie, ESPECIES, parseMoney } from "@/lib/helpers";
+import MoneyInput from "@/components/shared/MoneyInput";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import { exportToCsv } from "@/lib/csv";
 
@@ -54,16 +55,16 @@ export default function RegistroMasivo() {
 
   // Precio total por animal = peso × precio/kilo (o precio individual si se especifica)
   const getCostoPorAnimal = (row) => {
-    const indiv = parseFloat(row.precio_individual);
+    const indiv = parseMoney(row.precio_individual);
     if (indiv) return indiv;
     const peso = parseFloat(row.peso_compra);
-    const kilo = parseFloat(precioKilo);
+    const kilo = parseMoney(precioKilo);
     if (peso && kilo) return Math.round(peso * kilo);
     return null;
   };
 
   const getPrecioKilo = (row) => {
-    return parseFloat(precioKilo) || null;
+    return parseMoney(precioKilo) || null;
   };
 
   const updateRow = (idx, field, value) => {
@@ -273,7 +274,7 @@ export default function RegistroMasivo() {
           </div>
           <div>
             <Label className="text-xs mb-1 block">Precio por kilo común ($/kg)</Label>
-            <Input type="number" value={precioKilo} onChange={(e) => setPrecioKilo(e.target.value)} placeholder="Ej: 7500" />
+            <MoneyInput value={precioKilo} onChange={setPrecioKilo} placeholder="Ej: 7500" />
             {numAnimales > 0 && (
               <p className="text-xs text-amber-700 mt-1">Total del lote: {formatCurrency(validRows.reduce((s, r) => s + (getCostoPorAnimal(r) || 0), 0))}</p>
             )}
@@ -321,7 +322,7 @@ export default function RegistroMasivo() {
                         {existe && <span className="text-[10px] text-amber-600">ya existe</span>}
                       </td>
                       <td className="p-1.5"><Input type="number" value={row.peso_compra} onChange={(e) => updateRow(idx, "peso_compra", e.target.value)} className="h-8 w-20" /></td>
-                      <td className="p-1.5"><Input type="number" value={row.precio_individual} onChange={(e) => updateRow(idx, "precio_individual", e.target.value)} className="h-8 w-24" /></td>
+                      <td className="p-1.5"><MoneyInput value={row.precio_individual} onChange={(v) => updateRow(idx, "precio_individual", v)} className="h-8 w-24" /></td>
                       <td className="p-1.5 text-xs font-medium">{costo != null ? formatCurrency(costo) : "—"}</td>
                       <td className="p-1.5 text-xs">{precioKilo != null ? formatCurrency(precioKilo) : "—"}</td>
                       <td className="p-1.5"><Input value={row.color} onChange={(e) => updateRow(idx, "color", e.target.value)} className="h-8 w-20" /></td>

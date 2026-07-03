@@ -13,7 +13,8 @@ import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
-import { formatCurrency, TIPO_VENTA } from "@/lib/helpers";
+import { formatCurrency, TIPO_VENTA, parseMoney } from "@/lib/helpers";
+import MoneyInput from "@/components/shared/MoneyInput";
 import { exportToCsv } from "@/lib/csv";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -119,7 +120,7 @@ export default function Proformas() {
       }
       if (field === "animal_id" && !value) next.numero = "";
       const peso = parseFloat(next.peso) || 0;
-      const kilo = parseFloat(next.precio_kilo) || 0;
+      const kilo = parseMoney(next.precio_kilo) || 0;
       next.subtotal = Math.round(peso * kilo);
       return next;
     }));
@@ -129,7 +130,7 @@ export default function Proformas() {
     setItems((prev) => prev.map((it, i) => {
       if (i !== idx) return it;
       const peso = parseFloat(it.peso) || 0;
-      const kilo = parseFloat(it.precio_kilo) || 0;
+      const kilo = parseMoney(it.precio_kilo) || 0;
       return { ...it, subtotal: Math.round(peso * kilo) };
     }));
   };
@@ -143,7 +144,7 @@ export default function Proformas() {
       especie: form.especie,
       items_json: JSON.stringify(cleanItems),
       subtotal,
-      descuento: parseFloat(form.descuento) || 0,
+      descuento: parseMoney(form.descuento) || 0,
       total,
       estado: form.estado,
       validez_dias: parseInt(form.validez_dias) || 15,
@@ -305,7 +306,7 @@ export default function Proformas() {
                         </td>
                         <td className="px-2 py-1"><Input className="h-8 text-xs" value={it.numero} onChange={(e) => updateItem(idx, "numero", e.target.value)} placeholder="N°" /></td>
                         <td className="px-2 py-1"><Input className="h-8 text-xs text-right" type="number" step="0.1" value={it.peso} onChange={(e) => updateItem(idx, "peso", e.target.value)} onBlur={() => recomputeSubtotal(idx)} placeholder="0" /></td>
-                        <td className="px-2 py-1"><Input className="h-8 text-xs text-right" type="number" value={it.precio_kilo} onChange={(e) => updateItem(idx, "precio_kilo", e.target.value)} onBlur={() => recomputeSubtotal(idx)} placeholder="0" /></td>
+                        <td className="px-2 py-1"><MoneyInput className="h-8 text-xs text-right" value={it.precio_kilo} onChange={(v) => updateItem(idx, "precio_kilo", v)} onBlur={() => recomputeSubtotal(idx)} placeholder="0" /></td>
                         <td className="px-2 py-1 text-right font-medium">{formatCurrency(it.subtotal || 0)}</td>
                         <td className="px-1"><Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))}><Trash2 className="w-3.5 h-3.5 text-red-500" /></Button></td>
                       </tr>
@@ -318,7 +319,7 @@ export default function Proformas() {
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Descuento</Label>
-                <Input type="number" value={form.descuento} onChange={(e) => setForm((p) => ({ ...p, descuento: e.target.value }))} placeholder="0" />
+                <MoneyInput value={form.descuento} onChange={(v) => setForm((p) => ({ ...p, descuento: v }))} placeholder="0" />
               </div>
               <div>
                 <Label>Validez (días)</Label>

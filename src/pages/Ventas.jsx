@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { ShoppingCart, Plus, Layers } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
-import { formatCurrency, formatWeight, TIPO_VENTA } from "@/lib/helpers";
+import { formatCurrency, formatWeight, TIPO_VENTA, parseMoney } from "@/lib/helpers";
+import MoneyInput from "@/components/shared/MoneyInput";
 import CsvExportButton from "@/components/shared/CsvExportButton";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
@@ -79,8 +80,10 @@ export default function Ventas() {
     const data = {};
     for (const [key, value] of fd.entries()) {
       if (value !== "") {
-        if (["peso_venta", "precio_kilo", "precio_total", "costo_transporte", "comision", "otros_descuentos"].includes(key)) {
+        if (key === "peso_venta") {
           data[key] = parseFloat(value);
+        } else if (["precio_kilo", "precio_total", "costo_transporte", "comision", "otros_descuentos"].includes(key)) {
+          data[key] = parseMoney(value);
         } else {
           data[key] = value;
         }
@@ -97,8 +100,8 @@ export default function Ventas() {
     const nuevos = rows.map((r) => ({
       fecha: r.fecha, especie: r.especie || "bovino", comprador: r.comprador,
       peso_venta: parseFloat(r.peso_venta) || undefined,
-      precio_kilo: parseFloat(r.precio_kilo) || undefined,
-      precio_total: parseFloat(r.precio_total) || undefined,
+      precio_kilo: parseMoney(r.precio_kilo) || undefined,
+      precio_total: parseMoney(r.precio_total) || undefined,
     })).filter((r) => r.fecha && r.especie);
     if (nuevos.length) await base44.entities.Venta.bulkCreate(nuevos);
     queryClient.invalidateQueries({ queryKey: ["ventas"] });
@@ -230,7 +233,7 @@ export default function Ventas() {
               </div>
               <div>
                 <Label>Precio por kilo</Label>
-                <Input name="precio_kilo" type="number" value={precioKilo} onChange={e => setPrecioKilo(e.target.value)} placeholder="Ej: 7500" />
+                <MoneyInput name="precio_kilo" value={precioKilo} onChange={setPrecioKilo} placeholder="Ej: 7500" />
               </div>
             </div>
             {calcTotal != null && (
@@ -241,7 +244,7 @@ export default function Ventas() {
             )}
             <div>
               <Label>Precio total de venta (auto)</Label>
-              <Input name="precio_total" type="number" value={precioTotal} onChange={e => setPrecioTotal(e.target.value)} placeholder={calcTotal ? calcTotal.toString() : "Ej: 3.375.000"} className={calcTotal != null ? "border-emerald-400 bg-emerald-50" : ""} />
+              <MoneyInput name="precio_total" value={precioTotal} onChange={setPrecioTotal} placeholder={calcTotal ? calcTotal.toString() : "Ej: 3.375.000"} className={calcTotal != null ? "border-emerald-400 bg-emerald-50" : ""} />
               {calcTotal != null && <p className="text-xs text-emerald-600 mt-0.5">✓ Calculado automáticamente (peso × precio/kilo). Puedes ajustarlo si es necesario.</p>}
             </div>
             <div>
@@ -249,9 +252,9 @@ export default function Ventas() {
               <Input name="comprador" placeholder="Nombre del comprador" />
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div><Label>Transporte</Label><Input name="costo_transporte" type="number" placeholder="0" /></div>
-              <div><Label>Comisión</Label><Input name="comision" type="number" placeholder="0" /></div>
-              <div><Label>Otros</Label><Input name="otros_descuentos" type="number" placeholder="0" /></div>
+              <div><Label>Transporte</Label><MoneyInput name="costo_transporte" placeholder="0" /></div>
+              <div><Label>Comisión</Label><MoneyInput name="comision" placeholder="0" /></div>
+              <div><Label>Otros</Label><MoneyInput name="otros_descuentos" placeholder="0" /></div>
             </div>
             <div>
               <Label>Observaciones</Label>

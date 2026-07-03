@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import PageHeader from "@/components/shared/PageHeader";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { parseMoney } from "@/lib/helpers";
+import MoneyInput from "@/components/shared/MoneyInput";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
 
 const ESTADOS = ["programado", "enviado", "entregado", "cancelado", "con_novedad"];
@@ -56,7 +58,7 @@ export default function Despachos() {
 
   const save = useMutation({
     mutationFn: async (data) => {
-      const d = { ...data, numero_dosis: Number(data.numero_dosis) || 0, valor_cobrado: Number(data.valor_cobrado) || 0 };
+      const d = { ...data, numero_dosis: Number(data.numero_dosis) || 0, valor_cobrado: parseMoney(data.valor_cobrado) || 0 };
       if (editing) return base44.entities.Despacho.update(editing, d);
       return base44.entities.Despacho.create(d);
     },
@@ -216,7 +218,7 @@ export default function Despachos() {
               </div>
               <div className="space-y-1.5">
                 <Label>Valor cobrado ($)</Label>
-                <Input type="number" value={form.valor_cobrado} onChange={e => setForm(p => ({ ...p, valor_cobrado: e.target.value }))} placeholder="0" />
+                <MoneyInput value={form.valor_cobrado} onChange={v => setForm(p => ({ ...p, valor_cobrado: v }))} placeholder="0" />
               </div>
               <div className="space-y-1.5">
                 <Label>Transportadora</Label>

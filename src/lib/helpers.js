@@ -1,12 +1,15 @@
-// Format currency
-export function formatCurrency(value, currency = "COP") {
-  if (value == null || isNaN(value)) return "$0";
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+// Format currency in Colombian pesos: $ 2.800.000
+export function formatCurrency(value) {
+  if (value == null || isNaN(value)) return "$ 0";
+  const num = Math.round(Number(value));
+  return "$ " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// Parse monetary input: accepts "10000", "10.000", "$10.000", "$ 10.000" → 10000
+export function parseMoney(value) {
+  if (!value) return 0;
+  const cleaned = String(value).replace(/[^0-9]/g, "");
+  return parseInt(cleaned, 10) || 0;
 }
 
 // Format weight

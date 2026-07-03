@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, Check, Search, ShoppingCart, Layers, DollarSign } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
-import { formatCurrency, formatWeight, ESPECIES } from "@/lib/helpers";
+import { formatCurrency, formatWeight, ESPECIES, parseMoney } from "@/lib/helpers";
+import MoneyInput from "@/components/shared/MoneyInput";
 import { useToast } from "@/components/ui/use-toast";
 
 const emptyGeneral = {
@@ -243,17 +244,17 @@ export default function VentaMasiva() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Precio por kilo (general)</Label>
-              <Input type="number" value={general.precio_kilo} onChange={(e) => setGeneral((p) => ({ ...p, precio_kilo: e.target.value }))} placeholder="Opcional" />
+              <MoneyInput value={general.precio_kilo} onChange={(v) => setGeneral((p) => ({ ...p, precio_kilo: v }))} placeholder="Opcional" />
             </div>
             <div>
               <Label>Precio total del grupo</Label>
-              <Input type="number" value={general.precio_total_grupo} onChange={(e) => setGeneral((p) => ({ ...p, precio_total_grupo: e.target.value }))} placeholder="Opcional" />
+              <MoneyInput value={general.precio_total_grupo} onChange={(v) => setGeneral((p) => ({ ...p, precio_total_grupo: v }))} placeholder="Opcional" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label>Transporte</Label><Input type="number" value={general.transporte} onChange={(e) => setGeneral((p) => ({ ...p, transporte: e.target.value }))} placeholder="0" /></div>
-            <div><Label>Comisión</Label><Input type="number" value={general.comision} onChange={(e) => setGeneral((p) => ({ ...p, comision: e.target.value }))} placeholder="0" /></div>
-            <div><Label>Otros</Label><Input type="number" value={general.otros_descuentos} onChange={(e) => setGeneral((p) => ({ ...p, otros_descuentos: e.target.value }))} placeholder="0" /></div>
+            <div><Label>Transporte</Label><MoneyInput value={general.transporte} onChange={(v) => setGeneral((p) => ({ ...p, transporte: v }))} placeholder="0" /></div>
+            <div><Label>Comisión</Label><MoneyInput value={general.comision} onChange={(v) => setGeneral((p) => ({ ...p, comision: v }))} placeholder="0" /></div>
+            <div><Label>Otros</Label><MoneyInput value={general.otros_descuentos} onChange={(v) => setGeneral((p) => ({ ...p, otros_descuentos: v }))} placeholder="0" /></div>
           </div>
           <div>
             <Label>Observaciones generales</Label>
@@ -361,8 +362,8 @@ export default function VentaMasiva() {
                     <td className="p-2 font-medium">#{a.numero}</td>
                     <td className="p-2 text-right text-muted-foreground">{a.ultimo_peso || "—"}</td>
                     <td className="p-1"><Input type="number" step="0.1" className="h-8 text-xs text-right w-20" value={getAnimalField(a.id, "peso_venta")} onChange={(e) => setAnimalField(a.id, "peso_venta", e.target.value)} /></td>
-                    <td className="p-1"><Input type="number" className="h-8 text-xs text-right w-20" value={getAnimalField(a.id, "precio_kilo")} onChange={(e) => setAnimalField(a.id, "precio_kilo", e.target.value)} /></td>
-                    <td className="p-1"><Input type="number" className="h-8 text-xs text-right w-24" value={getAnimalField(a.id, "precio_total")} onChange={(e) => setAnimalField(a.id, "precio_total", e.target.value)} /></td>
+                    <td className="p-1"><MoneyInput className="h-8 text-xs text-right w-20" value={getAnimalField(a.id, "precio_kilo")} onChange={(v) => setAnimalField(a.id, "precio_kilo", v)} /></td>
+                    <td className="p-1"><MoneyInput className="h-8 text-xs text-right w-24" value={getAnimalField(a.id, "precio_total")} onChange={(v) => setAnimalField(a.id, "precio_total", v)} /></td>
                     <td className="p-1"><Input className="h-8 text-xs w-24" value={getAnimalField(a.id, "observacion")} onChange={(e) => setAnimalField(a.id, "observacion", e.target.value)} placeholder="—" /></td>
                   </tr>
                 ))}
@@ -410,7 +411,7 @@ export default function VentaMasiva() {
                   <tr key={a.id} className="border-t">
                     <td className="p-2 font-medium">#{a.numero}</td>
                     <td className="p-2 text-right">{getAnimalField(a.id, "peso_venta") || a.ultimo_peso || "—"}</td>
-                    <td className="p-2 text-right">{getAnimalField(a.id, "precio_kilo") || general.precio_kilo || "—"}</td>
+                    <td className="p-2 text-right">{formatCurrency(parseMoney(getAnimalField(a.id, "precio_kilo") || general.precio_kilo) || 0)}</td>
                     <td className="p-2 text-right font-medium">{formatCurrency(parseFloat(getAnimalField(a.id, "precio_total")) || 0)}</td>
                   </tr>
                 ))}

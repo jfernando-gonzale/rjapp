@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ArrowLeft } from "lucide-react";
-import { ESTADO_ANIMAL, getRazasByEspecie, calcEdadDesdeNacimiento } from "@/lib/helpers";
+import { ESTADO_ANIMAL, getRazasByEspecie, calcEdadDesdeNacimiento, parseMoney } from "@/lib/helpers";
+import MoneyInput from "@/components/shared/MoneyInput";
 
 export default function AnimalForm() {
   const navigate = useNavigate();
@@ -74,8 +75,10 @@ export default function AnimalForm() {
     const data = { especie };
     for (const [key, value] of fd.entries()) {
       if (value !== "") {
-        if (["peso_compra", "precio_compra", "precio_kilo_compra", "costo_transporte_inicial", "otros_costos_iniciales"].includes(key)) {
+        if (key === "peso_compra") {
           data[key] = parseFloat(value);
+        } else if (["precio_compra", "precio_kilo_compra", "costo_transporte_inicial", "otros_costos_iniciales"].includes(key)) {
+          data[key] = parseMoney(value);
         } else {
           data[key] = value;
         }
@@ -240,21 +243,19 @@ export default function AnimalForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Precio por kilo ($/kg)</Label>
-              <Input
+              <MoneyInput
                 name="precio_kilo_compra"
-                type="number"
                 value={precioKilo}
-                onChange={e => setPrecioKilo(e.target.value)}
+                onChange={setPrecioKilo}
                 placeholder="Ej: 7500"
               />
             </div>
             <div>
               <Label>Precio total de compra (auto)</Label>
-              <Input
+              <MoneyInput
                 name="precio_compra"
-                type="number"
                 value={precioCompra}
-                onChange={e => setPrecioCompra(e.target.value)}
+                onChange={setPrecioCompra}
                 placeholder="Calculado automático"
                 className={pesoCompra && precioKilo ? "border-amber-400 bg-amber-50" : ""}
               />
@@ -321,11 +322,11 @@ export default function AnimalForm() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Costo transporte</Label>
-                  <Input name="costo_transporte_inicial" type="number" defaultValue={defaults.costo_transporte_inicial} />
+                  <MoneyInput name="costo_transporte_inicial" defaultValue={defaults.costo_transporte_inicial} />
                 </div>
                 <div>
                   <Label>Otros costos</Label>
-                  <Input name="otros_costos_iniciales" type="number" defaultValue={defaults.otros_costos_iniciales} />
+                  <MoneyInput name="otros_costos_iniciales" defaultValue={defaults.otros_costos_iniciales} />
                 </div>
               </div>
               <div>

@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { DollarSign, Plus, Layers } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
-import { formatCurrency, CATEGORIA_GASTOS } from "@/lib/helpers";
+import { formatCurrency, CATEGORIA_GASTOS, parseMoney } from "@/lib/helpers";
+import MoneyInput from "@/components/shared/MoneyInput";
 import CsvExportButton from "@/components/shared/CsvExportButton";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
@@ -64,14 +65,14 @@ export default function Gastos() {
     const fd = new FormData(e.target);
     const data = {};
     for (const [key, value] of fd.entries()) {
-      if (value !== "") data[key] = key === "valor" ? parseFloat(value) : value;
+      if (value !== "") data[key] = key === "valor" ? parseMoney(value) : value;
     }
     createMutation.mutate(data);
   };
 
   const handleImportGastos = async (rows) => {
     const nuevos = rows.map((r) => ({
-      fecha: r.fecha, valor: parseFloat(r.valor) || 0,
+      fecha: r.fecha, valor: parseMoney(r.valor) || 0,
       categoria: r.categoria || "otros", especie: r.especie || "general",
       descripcion: r.descripcion, tipo_gasto: r.tipo_gasto || "general",
     })).filter((r) => r.fecha && r.valor);
@@ -170,7 +171,7 @@ export default function Gastos() {
             </div>
             <div>
               <Label>Valor *</Label>
-              <Input name="valor" type="number" required placeholder="Ej: 50000" className="text-lg h-12" />
+              <MoneyInput name="valor" required placeholder="Ej: 50000" className="text-lg h-12" />
             </div>
             <div>
               <Label>Especie / Línea</Label>
