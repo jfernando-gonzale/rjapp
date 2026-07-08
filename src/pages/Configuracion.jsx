@@ -6,11 +6,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Save, Check, LogOut } from "lucide-react";
+import { Settings, Save, Check, LogOut, FlaskConical, Trash2, Loader2 } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Configuracion() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+
+  const generarDemoMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('generarDatosDemo', {}),
+    onSuccess: (res) => {
+      toast({ title: "✅ Datos demo creados", description: res?.data?.message || "Datos de prueba generados correctamente." });
+      queryClient.invalidateQueries();
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err?.response?.data?.error || err.message, variant: "destructive" });
+    },
+  });
+
+  const eliminarDemoMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('eliminarDatosDemo', {}),
+    onSuccess: (res) => {
+      toast({ title: "🗑️ Datos demo eliminados", description: res?.data?.message || "Datos de prueba eliminados." });
+      setDemoDialogOpen(false);
+      queryClient.invalidateQueries();
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err?.response?.data?.error || err.message, variant: "destructive" });
+    },
+  });
   const [formData, setFormData] = useState({
     business_name: "",
     currency: "COP",
@@ -280,6 +308,63 @@ export default function Configuracion() {
         {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
         {saved ? "¡Guardado!" : "Guardar configuración"}
       </Button>
+
+      {user?.role === 'admin' && (
+        <Card className="p-5 space-y-4 mb-4 border-amber-200 bg-amber-50/50">
+          <div>
+            <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <FlaskConical className="w-4 h-4" /> Datos de prueba (Demo)
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">Genera o elimina datos hipotéticos para probar reportes, gráficas y análisis. Los datos demo están aislados y <strong>solo son visibles para tu usuario</strong>.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={() => generarDemoMutation.mutate()}
+              disabled={generarDemoMutation.isPending || eliminarDemoMutation.isPending}
+              className="gap-2 flex-1"
+            >
+              {generarDemoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
+              {generarDemoMutation.isPending ? "Generando..." : "Generar datos demo"}
+            </Button>
+            <Button
+              onClick={() => setDemoDialogOpen(true)}
+              variant="outline"
+              disabled={generarDemoMutation.isPending || eliminarDemoMutation.isPending}
+              className="gap-2 flex-1 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar datos demo
+            </Button>
+          </div>
+          {generarDemoMutation.data?.data?.counts && (
+            <p className="text-xs text-muted-foreground">
+              Última generación: {Object.entries(generarDemoMutation.data.data.counts).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+            </p>
+          )}
+
+          <AlertDialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar datos demo?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esto eliminará únicamente los datos demo marcados como "DATOS DEMO RJAPP". <strong>No se eliminarán datos reales de clientes.</strong>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={eliminarDemoMutation.isPending}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => { e.preventDefault(); eliminarDemoMutation.mutate(); }}
+                  disabled={eliminarDemoMutation.isPending}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {eliminarDemoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  {eliminarDemoMutation.isPending ? "Eliminando..." : "Sí, eliminar datos demo"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </Card>
+      )}
 
       <Button onClick={() => base44.auth.logout("/login")} variant="outline" className="w-full h-12 gap-2 mt-3 text-destructive hover:text-destructive">
         <LogOut className="w-5 h-5" />
