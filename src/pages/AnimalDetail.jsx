@@ -12,6 +12,7 @@ import { formatCurrency, formatWeight, ESTADO_ANIMAL, SEXO_ANIMAL, TIPO_TRATAMIE
 import { exportToCsv } from "@/lib/csv";
 import { calcGainFromPesajes, classifyGain, getThresholds, getSaleWeights, classifySaleStatus, isPotro } from "@/lib/gananciaUtils";
 import { getTerminologia } from "@/lib/reproduccion";
+import RentabilidadAnimal from "@/components/animal/RentabilidadAnimal";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -211,6 +212,17 @@ export default function AnimalDetail() {
           </div>
         </Card>
       )}
+
+      {/* Rentabilidad */}
+      <RentabilidadAnimal
+        animal={animal}
+        gastos={gastos}
+        tratamientos={tratamientos}
+        procedimientos={procedimientos}
+        ventas={ventas}
+        allAnimals={[]}
+        user={user}
+      />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-6">

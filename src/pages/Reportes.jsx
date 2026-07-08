@@ -11,6 +11,7 @@ import { formatCurrency, formatWeight, CATEGORIA_GASTOS } from "@/lib/helpers";
 import { getThresholds, getSaleWeights, classifySaleStatus } from "@/lib/gananciaUtils";
 import RankingGanancia from "@/components/reportes/RankingGanancia";
 import ReproduccionGenetica from "@/components/reportes/ReproduccionGenetica";
+import CostosProduccion from "@/components/reportes/CostosProduccion";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
 const COLORS = ["#2d9d78", "#e8a838", "#e05252", "#4a90d9", "#8b5cf6", "#f97316", "#06b6d4", "#84cc16"];
@@ -38,6 +39,8 @@ export default function Reportes() {
   const { data: inconformidades = [] } = useQuery({ queryKey: ["inconformidades"], queryFn: () => base44.entities.Inconformidad.list() });
   const { data: reproductores = [] } = useQuery({ queryKey: ["reproductores"], queryFn: () => base44.entities.Reproductor.list() });
   const { data: eventos = [] } = useQuery({ queryKey: ["eventos"], queryFn: () => base44.entities.EventoCalendario.list() });
+  const { data: tratamientos = [] } = useQuery({ queryKey: ["tratamientos"], queryFn: () => base44.entities.Tratamiento.list() });
+  const { data: procedimientos = [] } = useQuery({ queryKey: ["procedimientos"], queryFn: () => base44.entities.Procedimiento.list() });
 
   const thresholds = useMemo(() => getThresholds(user), [user]);
   const saleWeights = useMemo(() => getSaleWeights(user), [user]);
@@ -186,6 +189,7 @@ export default function Reportes() {
           <TabsTrigger value="gastos">Gastos</TabsTrigger>
           <TabsTrigger value="utilidad">Utilidad</TabsTrigger>
           <TabsTrigger value="ranking">Ranking productivo</TabsTrigger>
+          <TabsTrigger value="costos">Costos de Producción</TabsTrigger>
           <TabsTrigger value="reproduccion">Reproducción / Genética</TabsTrigger>
         </TabsList>
 
@@ -256,6 +260,27 @@ export default function Reportes() {
             loteFilter={filterLote}
             thresholds={thresholds}
             lotes={lotes}
+          />
+        </TabsContent>
+
+        <TabsContent value="costos">
+          <CostosProduccion
+            especieFilter={filterEspecie}
+            animals={filteredAnimals}
+            gastos={filteredGastos}
+            ventas={filteredVentas}
+            tratamientos={tratamientos}
+            procedimientos={procedimientos}
+            lotes={filteredLotes}
+            user={user}
+            yeguas={yeguas}
+            inseminaciones={inseminaciones}
+            confirmaciones={confirmaciones}
+            partos={partos}
+            colectas={colectas}
+            reproductores={reproductores}
+            despachos={despachos}
+            inconformidades={inconformidades}
           />
         </TabsContent>
 

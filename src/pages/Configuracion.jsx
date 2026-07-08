@@ -25,6 +25,9 @@ export default function Configuracion() {
       bovino: { peso_minimo_alerta: 400, peso_objetivo: 420, peso_ideal: 450 },
       ovino: { peso_minimo_alerta: 30, peso_objetivo: 35, peso_ideal: 40 },
     },
+    margenes_minimos: { bovino: 15, ovino: 15 },
+    precios_estimados_venta: { bovino: "", ovino: "" },
+    distribucion_gastos_default: "por_animal",
   });
 
   const { data: user } = useQuery({
@@ -47,6 +50,12 @@ export default function Configuracion() {
         bovino: { peso_minimo_alerta: 400, peso_objetivo: 420, peso_ideal: 450 },
         ovino: { peso_minimo_alerta: 30, peso_objetivo: 35, peso_ideal: 40 },
       };
+      let mm = user.margenes_minimos;
+      if (typeof mm === "string") { try { mm = JSON.parse(mm); } catch { mm = null; } }
+      if (!mm) mm = { bovino: 15, ovino: 15 };
+      let pev = user.precios_estimados_venta;
+      if (typeof pev === "string") { try { pev = JSON.parse(pev); } catch { pev = null; } }
+      if (!pev) pev = { bovino: "", ovino: "" };
       setFormData({
         business_name: user.business_name || "",
         currency: user.currency || "COP",
@@ -54,6 +63,9 @@ export default function Configuracion() {
         weighing_frequency_days: user.weighing_frequency_days || 30,
         umbrales_productivos: { ...umb },
         pesos_objetivo_venta: { ...pv },
+        margenes_minimos: { ...mm },
+        precios_estimados_venta: { ...pev },
+        distribucion_gastos_default: user.distribucion_gastos_default || "por_animal",
       });
     }
   }, [user]);
@@ -71,6 +83,8 @@ export default function Configuracion() {
       ...formData,
       umbrales_productivos: JSON.stringify(formData.umbrales_productivos),
       pesos_objetivo_venta: JSON.stringify(formData.pesos_objetivo_venta),
+      margenes_minimos: JSON.stringify(formData.margenes_minimos),
+      precios_estimados_venta: JSON.stringify(formData.precios_estimados_venta),
       weighing_frequency_days: parseInt(formData.weighing_frequency_days),
     });
   };
@@ -219,6 +233,46 @@ export default function Configuracion() {
         <div className="border rounded-lg p-3 bg-blue-50 border-blue-200">
           <h3 className="font-semibold text-sm text-blue-900">🐴 Equinos</h3>
           <p className="text-xs text-blue-800 mt-1">En equinos no se usa peso objetivo de venta como indicador principal. Para potros puede usarse seguimiento de crecimiento, pero no alerta automática de venta por peso.</p>
+        </div>
+      </Card>
+
+      <Card className="p-5 space-y-4 mb-4">
+        <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Análisis económico</h2>
+        <p className="text-sm text-muted-foreground">Parámetros para el cálculo de costos de producción y rentabilidad.</p>
+        {["bovino", "ovino"].map((esp) => (
+          <div key={esp} className="border rounded-lg p-3 space-y-2">
+            <h3 className="font-semibold capitalize text-sm">{esp === "bovino" ? "🐄 Bovinos" : "🐑 Ovinos"}</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-amber-600 text-xs">Margen mínimo esperado (%)</Label>
+                <Input type="number" step="1" value={formData.margenes_minimos[esp]}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, margenes_minimos: { ...prev.margenes_minimos, [esp]: parseFloat(e.target.value) || 0 } }))} />
+              </div>
+              <div>
+                <Label className="text-emerald-600 text-xs">Precio estimado venta ($/kg)</Label>
+                <Input type="number" step="100" value={formData.precios_estimados_venta[esp]}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, precios_estimados_venta: { ...prev.precios_estimados_venta, [esp]: parseFloat(e.target.value) || "" } }))} placeholder="Opcional" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Semáforo: <span className="text-emerald-600 font-medium">verde</span> si utilidad ≥ {formData.margenes_minimos[esp]}% ·
+              <span className="text-amber-600 font-medium"> amarillo</span> 0–{formData.margenes_minimos[esp]}% ·
+              <span className="text-red-600 font-medium"> rojo</span> si hay pérdida.
+            </p>
+          </div>
+        ))}
+        <div>
+          <Label>Distribución de gastos compartidos (por defecto)</Label>
+          <Select value={formData.distribucion_gastos_default} onValueChange={(v) => setFormData((prev) => ({ ...prev, distribucion_gastos_default: v }))}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="por_animal">Por animal (reparto equitativo)</SelectItem>
+              <SelectItem value="por_peso">Por peso (proporcional)</SelectItem>
+              <SelectItem value="manual">Manual</SelectItem>
+              <SelectItem value="no_distribuir">No distribuir</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">Define cómo se reparten los gastos de lote/finca entre los animales al calcular costos.</p>
         </div>
       </Card>
 
