@@ -71,6 +71,21 @@
       "default": "general",
       "description": "Tipo de asignaci\u00f3n del gasto"
     },
+    "metodo_distribucion": {
+      "type": "string",
+      "enum": [
+        "no_distribuir",
+        "por_animal",
+        "por_peso",
+        "manual"
+      ],
+      "default": "por_animal",
+      "description": "M\u00e9todo de distribuci\u00f3n del gasto entre animales"
+    },
+    "distribucion_json": {
+      "type": "string",
+      "description": "JSON con asignaci\u00f3n manual {animal_id: monto}"
+    },
     "comprobante_url": {
       "type": "string",
       "description": "URL del comprobante/foto"

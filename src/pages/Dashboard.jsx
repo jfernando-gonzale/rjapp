@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/helpers";
 import { buildProductiveAlerts, getThresholds, getSaleWeights } from "@/lib/gananciaUtils";
 import RJLogo from "@/components/RJLogo";
 import { CowIcon, SheepIcon, HorseIcon } from "@/components/shared/SpeciesIcons";
+import AlertasRentabilidad from "@/components/dashboard/AlertasRentabilidad";
 
 const FarmIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -35,6 +36,9 @@ export default function Dashboard() {
   const { data: eventos = [] } = useQuery({ queryKey: ["eventosCalendario"], queryFn: () => base44.entities.EventoCalendario.list() });
   const { data: reproductores = [] } = useQuery({ queryKey: ["reproductores"], queryFn: () => base44.entities.Reproductor.list() });
   const { data: crias = [] } = useQuery({ queryKey: ["crias"], queryFn: () => base44.entities.Cria.list() });
+  const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
+  const { data: procedimientos = [] } = useQuery({ queryKey: ["procedimientos"], queryFn: () => base44.entities.Procedimiento.list() });
+  const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
   const { data: user } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
 
   const today = new Date().toISOString().split("T")[0];
@@ -390,6 +394,18 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Alertas de rentabilidad */}
+      <AlertasRentabilidad
+        animals={animals}
+        gastos={gastos}
+        ventas={ventas}
+        tratamientos={tratamientos}
+        procedimientos={procedimientos}
+        lotes={lotes}
+        fincas={fincas}
+        user={user}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import {
   Home, Scale, Syringe, DollarSign, ShoppingCart, BarChart3,
   Settings, Menu, X, ChevronRight, LogOut, Bell, Truck,
   Users, MapPin, Layers, Calendar, ClipboardList, FileText, Sparkles,
-  Shield
+  Shield, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -118,6 +118,7 @@ const navGroups = [
     label: "Análisis",
     items: [
       { path: "/reportes", label: "Reportes", icon: BarChart3 },
+      { path: "/rentabilidad", label: "Análisis de Rentabilidad", icon: TrendingUp },
       { path: "/asistente", label: "Asistente RJAPP", icon: Sparkles },
       { path: "/calendario", label: "Calendario / Alertas", icon: Bell },
     ]

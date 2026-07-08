@@ -34,6 +34,7 @@ import Procedimientos from '@/pages/Procedimientos';
 import RegistroMasivo from '@/pages/RegistroMasivo';
 import Reproduccion from '@/pages/Reproduccion';
 import Reportes from '@/pages/Reportes';
+import AnalisisRentabilidad from '@/pages/AnalisisRentabilidad';
 import Proformas from '@/pages/Proformas';
 import VentaMasiva from '@/pages/VentaMasiva';
 import AsistenteRJAPP from '@/pages/AsistenteRJAPP';
@@ -123,6 +124,7 @@ const AuthenticatedApp = () => {
 
           {/* Análisis */}
           <Route path="/reportes" element={<Reportes />} />
+          <Route path="/rentabilidad" element={<AnalisisRentabilidad />} />
           <Route path="/calendario" element={<CalendarioIntegral />} />
           <Route path="/asistente" element={<AsistenteRJAPP />} />
 
