@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Syringe, Plus } from "lucide-react";
+import AnimalSearchSelect from "@/components/shared/AnimalSearchSelect";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -40,6 +41,7 @@ export default function Tratamientos() {
   const [esRecurrente, setEsRecurrente] = useState(false);
   const [frecuencia, setFrecuencia] = useState("6m");
   const [intervaloDias, setIntervaloDias] = useState("");
+  const [selectedAnimalId, setSelectedAnimalId] = useState(preAnimal || "");
 
   const { data: tratamientos = [], isLoading } = useQuery({ queryKey: ["tratamientos"], queryFn: () => base44.entities.Tratamiento.list("-fecha", 200) });
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
@@ -68,6 +70,9 @@ export default function Tratamientos() {
     }
     createMutation.mutate(data);
   };
+
+  // Limpiar animal seleccionado si cambia la especie del formulario
+  useEffect(() => { setSelectedAnimalId(""); }, [formEspecie]);
 
   const animalMap = {};
   animals.forEach(a => { animalMap[a.id] = a; });
@@ -217,14 +222,13 @@ export default function Tratamientos() {
             {tipoRegistro === "individual" ? (
               <div>
                 <Label>Animal * <span className="text-xs text-amber-600">({animalesForm.length} {ESPECIE_LABELS[formEspecie]})</span></Label>
-                <Select name="animal_id" defaultValue={preAnimal || ""} required>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                  <SelectContent>
-                    {animalesForm.map(a => (
-                      <SelectItem key={a.id} value={a.id}>#{a.numero} {a.nombre ? `(${a.nombre})` : ""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AnimalSearchSelect
+                  name="animal_id"
+                  value={selectedAnimalId}
+                  onChange={setSelectedAnimalId}
+                  especie={formEspecie}
+                  required
+                />
               </div>
             ) : (
               <>

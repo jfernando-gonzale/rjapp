@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Scale, Syringe, ShoppingCart, DollarSign, Baby } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ const CowIcon = (props) => (
 );
 
 export default function Bovinos() {
+  const navigate = useNavigate();
   const { data: animals = [] } = useQuery({
     queryKey: ["animals"],
     queryFn: () => base44.entities.Animal.list(),
@@ -48,7 +49,7 @@ export default function Bovinos() {
         title="Bovinos 🐄"
         subtitle={`${activos.length} activos · ${vendidos.length} vendidos`}
         actionLabel="Nuevo Bovino"
-        onAction={() => window.location.href = "/animales/nuevo"}
+        onAction={() => navigate("/animales/nuevo?especie=bovino")}
       />
 
       {/* KPIs */}

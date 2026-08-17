@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Scale, Syringe, ShoppingCart, DollarSign, Baby, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { SheepIcon } from "@/components/shared/SpeciesIcons";
@@ -9,6 +9,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import { formatCurrency } from "@/lib/helpers";
 
 export default function Ovinos() {
+  const navigate = useNavigate();
   const { data: animals = [] } = useQuery({
     queryKey: ["animals"],
     queryFn: () => base44.entities.Animal.list(),
@@ -31,7 +32,7 @@ export default function Ovinos() {
         title="Ovinos 🐑"
         subtitle={`${activos.length} activos · ${vendidos.length} vendidos`}
         actionLabel="Nuevo Ovino"
-        onAction={() => window.location.href = "/animales/nuevo"}
+        onAction={() => navigate("/animales/nuevo?especie=ovino")}
       />
 
       {/* KPIs */}

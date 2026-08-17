@@ -18,8 +18,11 @@ export default function AnimalForm() {
   const { id } = useParams();
   const isEditing = !!id;
   const queryClient = useQueryClient();
+  const urlParams = new URLSearchParams(window.location.search);
+  const presetEspecie = urlParams.get("especie");
   const [moreDetails, setMoreDetails] = useState(false);
-  const [especie, setEspecie] = useState("bovino");
+  const [especie, setEspecie] = useState(presetEspecie || "bovino");
+  const [dupError, setDupError] = useState(null);
   const [pesoCompra, setPesoCompra] = useState("");
   const [precioKilo, setPrecioKilo] = useState("");
   const [precioCompra, setPrecioCompra] = useState("");
@@ -35,6 +38,7 @@ export default function AnimalForm() {
 
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
+  const { data: allAnimals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
 
   useEffect(() => {
     if (animal) {
@@ -101,6 +105,15 @@ export default function AnimalForm() {
     } else if (edadAprox) {
       data.edad_aproximada = edadAprox;
     }
+    // Validar duplicado: mismo número + misma especie (excluyendo el actual si edita)
+    if (data.numero) {
+      const dup = allAnimals.find(a => a.numero === data.numero && (a.especie || "bovino") === especie && a.id !== id);
+      if (dup) {
+        setDupError(dup);
+        return;
+      }
+    }
+    setDupError(null);
     if (isEditing) updateMutation.mutate(data);
     else createMutation.mutate(data);
   };
@@ -123,37 +136,45 @@ export default function AnimalForm() {
       </Button>
 
       <h1 className="text-2xl font-heading font-bold mb-6">
-        {isEditing ? `Editar ${especieLabels[especie]}` : `Nuevo Animal`}
+        {isEditing ? `Editar ${especieLabels[especie]}` : presetEspecie ? `Nuevo ${especieLabels[especie]}` : "Nuevo Animal"}
       </h1>
 
       <form onSubmit={handleSubmit}>
         <Card className="p-5 space-y-4 mb-4">
           <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Datos básicos</h2>
 
-          {/* Especie */}
-          <div>
-            <Label>Especie *</Label>
-            <div className="flex gap-2 mt-1">
-              {[
-                { key: "bovino", label: "🐄 Bovino" },
-                { key: "ovino", label: "🐑 Ovino" },
-                { key: "equino", label: "🐴 Equino" },
-              ].map(e => (
-                <button
-                  key={e.key}
-                  type="button"
-                  onClick={() => setEspecie(e.key)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-all ${
-                    especie === e.key
-                      ? "bg-amber-500 text-black border-amber-500"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
-                  }`}
-                >
-                  {e.label}
-                </button>
-              ))}
+          {/* Especie - solo se muestra si no viene preset de un módulo específico */}
+          {!presetEspecie && (
+            <div>
+              <Label>Especie *</Label>
+              <div className="flex gap-2 mt-1">
+                {[
+                  { key: "bovino", label: "🐄 Bovino" },
+                  { key: "ovino", label: "🐑 Ovino" },
+                  { key: "equino", label: "🐴 Equino" },
+                ].map(e => (
+                  <button
+                    key={e.key}
+                    type="button"
+                    onClick={() => setEspecie(e.key)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                      especie === e.key
+                        ? "bg-amber-500 text-black border-amber-500"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+                    }`}
+                  >
+                    {e.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+          {presetEspecie && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Especie:</span>
+              <span className="font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-800">{especieLabels[especie]}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -336,6 +357,20 @@ export default function AnimalForm() {
             </Card>
           </CollapsibleContent>
         </Collapsible>
+
+        {dupError && (
+          <div className="rounded-lg border border-red-300 bg-red-50 p-4 mb-4">
+            <p className="font-semibold text-red-900 text-sm mb-1">⚠️ Animal duplicado</p>
+            <p className="text-sm text-red-700 mb-3">
+              Ya existe un {especieLabels[especie].toLowerCase()} con el número/chapeta <strong>#{dupError.numero}</strong>.
+              No puedes tener dos animales con el mismo número dentro de la misma especie.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" onClick={() => navigate(`/animales/${dupError.id}`)}>Ver animal existente</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setDupError(null)}>Corregir número</Button>
+            </div>
+          </div>
+        )}
 
         <Button
           type="submit"
