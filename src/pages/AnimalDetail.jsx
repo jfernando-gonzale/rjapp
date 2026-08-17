@@ -13,6 +13,7 @@ import { exportToCsv } from "@/lib/csv";
 import { calcGainFromPesajes, classifyGain, getThresholds, getSaleWeights, classifySaleStatus, isPotro } from "@/lib/gananciaUtils";
 import { getTerminologia } from "@/lib/reproduccion";
 import RentabilidadAnimal from "@/components/animal/RentabilidadAnimal";
+import GenealogiaSection from "@/components/animal/GenealogiaSection";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -223,6 +224,9 @@ export default function AnimalDetail() {
         allAnimals={[]}
         user={user}
       />
+
+      {/* Genealogía: Ascendencia + Descendencia */}
+      <GenealogiaSection animalId={id} especie={especie} />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-6">

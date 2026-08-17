@@ -195,6 +195,23 @@ export default function Dashboard() {
     equino: "Resumen de operación equina",
   };
 
+  const getStatLink = (label) => {
+    const l = label.toLowerCase();
+    if (l.includes("bovino")) return "/bovinos";
+    if (l.includes("ovino")) return "/ovinos";
+    if (l.includes("equino")) return "/equinos";
+    if (l.includes("yegua")) return "/caballos/yeguas";
+    if (l.includes("cría") || l.includes("cria")) return "/caballos/crias";
+    if (l.includes("parto")) return "/caballos/calendario";
+    if (l.includes("gasto")) return "/gastos";
+    if (l.includes("venta")) return "/ventas";
+    if (l.includes("total activo") || l.includes("total activ")) return "/animales";
+    if (specieFilter === "bovino") return "/bovinos";
+    if (specieFilter === "ovino") return "/ovinos";
+    if (specieFilter === "equino") return "/equinos";
+    return "/animales";
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -225,16 +242,19 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {stats.map((s, i) => (
-          <Card key={i} className={`p-4 ${s.accent ? "border-amber-400 border-2" : ""}`}>
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-muted-foreground font-medium">{s.label}</p>
-              <div className="flex items-center gap-2">
-                {s.Icon && <s.Icon className="w-5 h-5 text-amber-500" />}
-                <p className={`font-heading font-bold text-foreground ${s.large ? "text-lg" : "text-2xl"}`}>{s.value}</p>
+          <Link to={getStatLink(s.label)} key={i}>
+            <Card className={`p-4 ${s.accent ? "border-amber-400 border-2" : ""} hover:shadow-md hover:border-amber-400 hover:-translate-y-0.5 transition-all cursor-pointer group h-full`}>
+              <div className="flex flex-col gap-1">
+                <p className="text-xs text-muted-foreground font-medium">{s.label}</p>
+                <div className="flex items-center gap-2">
+                  {s.Icon && <s.Icon className="w-5 h-5 text-amber-500" />}
+                  <p className={`font-heading font-bold text-foreground ${s.large ? "text-lg" : "text-2xl"}`}>{s.value}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">{s.sub}</p>
+                <p className="text-[10px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">Ver detalle →</p>
               </div>
-              <p className="text-xs text-muted-foreground">{s.sub}</p>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
 

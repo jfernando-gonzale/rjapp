@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,6 +6,8 @@ import { Scale, Syringe, ShoppingCart, DollarSign, Baby } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/shared/PageHeader";
+import ClickableStat from "@/components/shared/ClickableStat";
+import AnimalListPanel from "@/components/shared/AnimalListPanel";
 import { formatCurrency, formatWeight } from "@/lib/helpers";
 
 const CowIcon = (props) => (
@@ -25,6 +27,7 @@ const CowIcon = (props) => (
 
 export default function Bovinos() {
   const navigate = useNavigate();
+  const [panel, setPanel] = useState({ open: false, title: "", description: "", animals: [] });
   const { data: animals = [] } = useQuery({
     queryKey: ["animals"],
     queryFn: () => base44.entities.Animal.list(),
@@ -43,6 +46,9 @@ export default function Bovinos() {
   const totalGastos = gastos.filter(g => g.especie === "bovino" || g.especie === "general" || !g.especie).reduce((s, g) => s + (g.valor || 0), 0);
   const totalVentas = ventas.filter(v => v.especie === "bovino" || !v.especie).reduce((s, v) => s + (v.precio_total || 0), 0);
 
+  const openPanel = (title, description, list) => setPanel({ open: true, title, description, animals: list });
+  const terneros = activos.filter(a => a.mother_id || a.fecha_nacimiento);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -54,33 +60,24 @@ export default function Bovinos() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Total bovinos", value: animals.length, sub: `${activos.length} activos` },
-          { label: "Vacas / Novillas", value: hembras.length, sub: "Hembras reproductivas" },
-          { label: "Toros / Novillos", value: machos.length, sub: "Machos activos" },
-          { label: "Peso promedio", value: pesoPromedio > 0 ? `${pesoPromedio} kg` : "—", sub: "Animales activos" },
-        ].map((s, i) => (
-          <Card key={i} className="p-4">
-            <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
-            <p className="text-2xl font-heading font-bold">{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
-          </Card>
-        ))}
+        <ClickableStat label="Total bovinos" value={animals.length} sub={`${activos.length} activos`} onClick={() => openPanel("Total bovinos", "Todos los bovinos registrados", animals)} />
+        <ClickableStat label="Bovinos activos" value={activos.length} sub="En producción" onClick={() => openPanel("Bovinos activos", "Animales con estado activo", activos)} />
+        <ClickableStat label="Vacas / Novillas" value={hembras.length} sub="Hembras reproductivas" onClick={() => openPanel("Vacas / Novillas", "Hembras activas", hembras)} />
+        <ClickableStat label="Toros / Novillos" value={machos.length} sub="Machos activos" onClick={() => openPanel("Toros / Novillos", "Machos activos", machos)} />
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ClickableStat label="Terneros / Terneras" value={terneros.length} sub="Crías / jóvenes" onClick={() => openPanel("Terneros / Terneras", "Animales con madre registrada", terneros)} />
+        <ClickableStat label="Vendidos" value={vendidos.length} sub="Histórico de ventas" onClick={() => openPanel("Bovinos vendidos", "Animales vendidos", vendidos)} />
+        <ClickableStat label="Peso promedio" value={pesoPromedio > 0 ? `${pesoPromedio} kg` : "—"} sub="Animales activos" onClick={() => openPanel("Bovinos con peso", "Animales activos con peso registrado", activos.filter(a => a.ultimo_peso))} />
+        <ClickableStat label="Crías vinculadas" value={animals.filter(a => a.mother_id).length} sub="Con madre asignada" onClick={() => openPanel("Crías con genealogía", "Animales con madre registrada", animals.filter(a => a.mother_id))} />
       </div>
 
       {/* Financiero */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {[
-          { label: "Inversión total", value: formatCurrency(totalInv), sub: "Compra de animales" },
-          { label: "Gastos totales", value: formatCurrency(totalGastos), sub: "Operación bovina" },
-          { label: "Ventas", value: formatCurrency(totalVentas), sub: `Utilidad: ${formatCurrency(totalVentas - totalInv - totalGastos)}` },
-        ].map((s, i) => (
-          <Card key={i} className="p-4">
-            <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
-            <p className="text-xl font-heading font-bold">{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
-          </Card>
-        ))}
+        <ClickableStat label="Inversión total" value={formatCurrency(totalInv)} sub="Compra de animales" large onClick={() => openPanel("Inversión total", "Animales con precio de compra", animals.filter(a => a.precio_compra))} />
+        <ClickableStat label="Gastos totales" value={formatCurrency(totalGastos)} sub="Operación bovina" large onClick={() => navigate("/gastos")} />
+        <ClickableStat label="Ventas" value={formatCurrency(totalVentas)} sub={`Utilidad: ${formatCurrency(totalVentas - totalInv - totalGastos)}`} large onClick={() => navigate("/ventas?especie=bovino")} />
       </div>
 
       {/* Líneas productivas */}
@@ -129,6 +126,14 @@ export default function Bovinos() {
           ))}
         </div>
       </div>
+
+      <AnimalListPanel
+        open={panel.open}
+        onOpenChange={(open) => setPanel(p => ({ ...p, open }))}
+        title={panel.title}
+        description={panel.description}
+        animals={panel.animals}
+      />
     </div>
   );
 }

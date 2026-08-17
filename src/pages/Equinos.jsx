@@ -52,32 +52,38 @@ export default function Equinos() {
       {/* KPIs yeguas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total yeguas", value: yeguas.length, sub: "Activas en reproducción", accent: false },
-          { label: "Preñadas", value: preñadas.length, sub: `${inseminadas.length} inseminadas`, accent: preñadas.length > 0 },
-          { label: "Paridas", value: paridas.length, sub: "Con potro al lado", accent: false },
-          { label: "Partos próximos", value: partosProx.length, sub: "Próximos 30 días", accent: partosProx.length > 0 },
+          { label: "Total yeguas", value: yeguas.length, sub: "Activas en reproducción", accent: false, link: "/caballos/yeguas" },
+          { label: "Preñadas", value: preñadas.length, sub: `${inseminadas.length} inseminadas`, accent: preñadas.length > 0, link: "/caballos/yeguas" },
+          { label: "Paridas", value: paridas.length, sub: "Con potro al lado", accent: false, link: "/caballos/yeguas" },
+          { label: "Partos próximos", value: partosProx.length, sub: "Próximos 30 días", accent: partosProx.length > 0, link: "/caballos/calendario" },
         ].map((s, i) => (
-          <Card key={i} className={`p-4 ${s.accent ? "border-amber-400 border-2" : ""}`}>
-            <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
-            <p className="text-2xl font-heading font-bold">{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
-          </Card>
+          <Link to={s.link} key={i}>
+            <Card className={`p-4 ${s.accent ? "border-amber-400 border-2" : ""} hover:shadow-md hover:border-amber-400 hover:-translate-y-0.5 transition-all cursor-pointer group`}>
+              <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
+              <p className="text-2xl font-heading font-bold">{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
+              <p className="text-[10px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">Ver detalle →</p>
+            </Card>
+          </Link>
         ))}
       </div>
 
       {/* KPIs reproductores */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Reproductores activos", value: reproductoresActivos.length, sub: `${reproductores.length} total` },
-          { label: "Colectas realizadas", value: colectas.length, sub: `${totalDosis} dosis totales` },
-          { label: "Despachos activos", value: despachosActivos.length, sub: "En tránsito" },
-          { label: "Inconformidades abiertas", value: inconformidadesAbiertas.length, sub: "Pendientes de resolver", danger: inconformidadesAbiertas.length > 0 },
+          { label: "Reproductores activos", value: reproductoresActivos.length, sub: `${reproductores.length} total`, link: "/reproductores" },
+          { label: "Colectas realizadas", value: colectas.length, sub: `${totalDosis} dosis totales`, link: "/reproductores" },
+          { label: "Despachos activos", value: despachosActivos.length, sub: "En tránsito", link: "/despachos" },
+          { label: "Inconformidades abiertas", value: inconformidadesAbiertas.length, sub: "Pendientes de resolver", danger: inconformidadesAbiertas.length > 0, link: "/despachos" },
         ].map((s, i) => (
-          <Card key={i} className={`p-4 ${s.danger ? "border-red-200" : ""}`}>
-            <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
-            <p className={`text-2xl font-heading font-bold ${s.danger ? "text-red-600" : ""}`}>{s.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
-          </Card>
+          <Link to={s.link} key={i}>
+            <Card className={`p-4 ${s.danger ? "border-red-200" : ""} hover:shadow-md hover:border-amber-400 hover:-translate-y-0.5 transition-all cursor-pointer group`}>
+              <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
+              <p className={`text-2xl font-heading font-bold ${s.danger ? "text-red-600" : ""}`}>{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
+              <p className="text-[10px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">Ver detalle →</p>
+            </Card>
+          </Link>
         ))}
       </div>
 

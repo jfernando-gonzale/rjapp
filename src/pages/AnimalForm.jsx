@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ArrowLeft } from "lucide-react";
 import { ESTADO_ANIMAL, getRazasByEspecie, calcEdadDesdeNacimiento, parseMoney } from "@/lib/helpers";
 import MoneyInput from "@/components/shared/MoneyInput";
+import CriasSection from "@/components/shared/CriasSection";
 
 export default function AnimalForm() {
   const navigate = useNavigate();
@@ -23,6 +24,10 @@ export default function AnimalForm() {
   const [moreDetails, setMoreDetails] = useState(false);
   const [especie, setEspecie] = useState(presetEspecie || "bovino");
   const [dupError, setDupError] = useState(null);
+  const [crias, setCrias] = useState([]);
+  const [sexoForm, setSexoForm] = useState("");
+  const [fincaForm, setFincaForm] = useState("");
+  const [loteForm, setLoteForm] = useState("");
   const [pesoCompra, setPesoCompra] = useState("");
   const [precioKilo, setPrecioKilo] = useState("");
   const [precioCompra, setPrecioCompra] = useState("");
@@ -43,6 +48,9 @@ export default function AnimalForm() {
   useEffect(() => {
     if (animal) {
       setEspecie(animal.especie || "bovino");
+      setSexoForm(animal.sexo || "");
+      setFincaForm(animal.finca_id || "");
+      setLoteForm(animal.lote_id || "");
       setPesoCompra(animal.peso_compra?.toString() || "");
       setPrecioCompra(animal.precio_compra?.toString() || "");
       setPrecioKilo(animal.precio_kilo_compra?.toString() || "");
@@ -59,14 +67,42 @@ export default function AnimalForm() {
     }
   }, [pesoCompra, precioKilo]);
 
+  const crearCrias = async (motherId, motherFincaId, motherLoteId) => {
+    for (const c of crias) {
+      if (c.resultado !== "cria_viva" || !c.crear_inventario || !c.numero) continue;
+      const dup = allAnimals.find(a => a.numero === c.numero && (a.especie || "bovino") === especie);
+      if (dup) continue; // no crear duplicados
+      await base44.entities.Animal.create({
+        especie,
+        numero: c.numero,
+        nombre: c.nombre || "",
+        sexo: c.sexo || "hembra",
+        raza: c.raza || "",
+        color: c.color || "",
+        fecha_nacimiento: c.fecha_nacimiento || "",
+        finca_id: c.finca_id || motherFincaId || "",
+        lote_id: c.lote_id || motherLoteId || "",
+        estado: "activo",
+        mother_id: motherId,
+        father_id: c.padre_id || "",
+        observaciones: c.observaciones || "",
+      });
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Animal.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["animals"] }); navigate("/animales"); },
+    onSuccess: async (mother) => {
+      await crearCrias(mother.id, mother.finca_id, mother.lote_id);
+      queryClient.invalidateQueries({ queryKey: ["animals"] });
+      navigate("/animales");
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Animal.update(id, data),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await crearCrias(id, fincaForm, loteForm);
       queryClient.invalidateQueries({ queryKey: ["animals"] });
       queryClient.invalidateQueries({ queryKey: ["animal", id] });
       navigate(`/animales/${id}`);
@@ -190,7 +226,7 @@ export default function AnimalForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Finca *</Label>
-              <Select name="finca_id" defaultValue={defaults.finca_id} required>
+              <Select name="finca_id" defaultValue={defaults.finca_id} onValueChange={setFincaForm} required>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
                   {fincas.map(f => <SelectItem key={f.id} value={f.id}>{f.nombre}</SelectItem>)}
@@ -199,7 +235,7 @@ export default function AnimalForm() {
             </div>
             <div>
               <Label>Lote / Potrero</Label>
-              <Select name="lote_id" defaultValue={defaults.lote_id}>
+              <Select name="lote_id" defaultValue={defaults.lote_id} onValueChange={setLoteForm}>
                 <SelectTrigger><SelectValue placeholder="Sin lote" /></SelectTrigger>
                 <SelectContent>
                   {lotes.map(l => <SelectItem key={l.id} value={l.id}>{l.nombre}</SelectItem>)}
@@ -211,7 +247,7 @@ export default function AnimalForm() {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Sexo</Label>
-              <Select name="sexo" defaultValue={defaults.sexo}>
+              <Select name="sexo" defaultValue={defaults.sexo} onValueChange={setSexoForm}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="macho">{sexoLabels.macho}</SelectItem>
@@ -357,6 +393,14 @@ export default function AnimalForm() {
             </Card>
           </CollapsibleContent>
         </Collapsible>
+
+        <CriasSection
+          especie={especie}
+          sexoMadre={sexoForm}
+          motherFincaId={fincaForm}
+          motherLoteId={loteForm}
+          onCriasChange={setCrias}
+        />
 
         {dupError && (
           <div className="rounded-lg border border-red-300 bg-red-50 p-4 mb-4">

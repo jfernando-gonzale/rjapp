@@ -118,6 +118,18 @@
     "foto_url": {
       "type": "string",
       "description": "Foto del animal"
+    },
+    "mother_id": {
+      "type": "string",
+      "description": "ID del animal madre (genealog\u00eda - ascendencia)"
+    },
+    "father_id": {
+      "type": "string",
+      "description": "ID del animal padre (genealog\u00eda - ascendencia)"
+    },
+    "birth_event_id": {
+      "type": "string",
+      "description": "ID del evento de nacimiento/parto del que proviene"
     }
   },
   "required": [
