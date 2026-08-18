@@ -14,6 +14,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import DeleteConfirmButton from "@/components/shared/DeleteConfirmButton";
+import AnimalSearchSelect from "@/components/shared/AnimalSearchSelect";
 import { formatCurrency, TIPO_PROCEDIMIENTO, PROCEDIMIENTOS_POR_ESPECIE } from "@/lib/helpers";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -35,6 +36,7 @@ export default function Procedimientos() {
   const [dialogOpen, setDialogOpen] = useState(isNew);
   const [tipoRegistro, setTipoRegistro] = useState("individual");
   const [formEspecie, setFormEspecie] = useState("bovino");
+  const [formAnimal, setFormAnimal] = useState(preAnimal || "");
   const [filterEspecie, setFilterEspecie] = useState("all");
   const [filterTipo, setFilterTipo] = useState("all");
   const [filterFinca, setFilterFinca] = useState("all");
@@ -98,7 +100,7 @@ export default function Procedimientos() {
   return (
     <div>
       <PageHeader title="Procedimientos / Manejos" subtitle={`${filtered.length} registros`}>
-        <Button className="gap-2" onClick={() => setDialogOpen(true)}><Plus className="w-4 h-4" /> Nuevo</Button>
+        <Button className="gap-2" onClick={() => { setFormAnimal(""); setDialogOpen(true); }}><Plus className="w-4 h-4" /> Nuevo</Button>
       </PageHeader>
 
       {/* Filtro especie */}
@@ -269,14 +271,14 @@ export default function Procedimientos() {
             {tipoRegistro === "individual" ? (
               <div>
                 <Label>Animal * <span className="text-xs text-amber-600">({animalesForm.length} {ESPECIE_LABELS[formEspecie]})</span></Label>
-                <Select name="animal_id" defaultValue={preAnimal || ""} required>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                  <SelectContent>
-                    {animalesForm.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>#{a.numero} {a.nombre ? `(${a.nombre})` : ""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AnimalSearchSelect
+                  name="animal_id"
+                  value={formAnimal}
+                  onChange={setFormAnimal}
+                  especie={formEspecie}
+                  estados={["activo"]}
+                  required
+                />
               </div>
             ) : (
               <>

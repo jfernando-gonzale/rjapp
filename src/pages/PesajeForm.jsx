@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Weight, Check } from "lucide-react";
 import { formatWeight, daysBetween, calcDailyGain } from "@/lib/helpers";
 import GainIndicator from "@/components/shared/GainIndicator";
+import AnimalSearchSelect from "@/components/shared/AnimalSearchSelect";
+import { ESPECIES } from "@/lib/helpers";
 
 export default function PesajeForm() {
   const navigate = useNavigate();
@@ -183,17 +185,26 @@ export default function PesajeForm() {
         <form onSubmit={handleIndividualSubmit}>
           <Card className="p-4 space-y-3 mb-4">
             <div>
-              <Label>Animal * {selectedEspecie !== "all" && <span className="text-xs text-amber-600 ml-1">({filteredAnimals.length} disponibles)</span>}</Label>
-              <Select value={selectedAnimal} onValueChange={setSelectedAnimal} required>
-                <SelectTrigger><SelectValue placeholder="Buscar animal..." /></SelectTrigger>
-                <SelectContent>
-                  {filteredAnimals.map(a => (
-                    <SelectItem key={a.id} value={a.id}>
-                      #{a.numero} {a.nombre ? `(${a.nombre})` : ""} - {a.ultimo_peso ? `${a.ultimo_peso} kg` : "Sin peso"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>
+                Animal *{" "}
+                {selectedEspecie !== "all" && (
+                  <span className="text-xs text-amber-600 ml-1">
+                    ({filteredAnimals.length} {ESPECIES[selectedEspecie]})
+                  </span>
+                )}
+                {selectedEspecie === "all" && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    ({filteredAnimals.length} disponibles)
+                  </span>
+                )}
+              </Label>
+              <AnimalSearchSelect
+                value={selectedAnimal}
+                onChange={setSelectedAnimal}
+                especie={selectedEspecie === "all" ? null : selectedEspecie}
+                estados={["activo"]}
+                required
+              />
             </div>
             <div>
               <Label>Peso (kg) *</Label>
