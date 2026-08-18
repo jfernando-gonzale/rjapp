@@ -1,3 +1,8 @@
+// Inversión total de un animal: precio de compra + transporte inicial + otros costos iniciales
+export function inversionAnimal(a) {
+  return (a?.precio_compra || 0) + (a?.costo_transporte_inicial || 0) + (a?.otros_costos_iniciales || 0);
+}
+
 // Format currency in Colombian pesos: $ 2.800.000
 export function formatCurrency(value) {
   if (value == null || isNaN(value)) return "$ 0";

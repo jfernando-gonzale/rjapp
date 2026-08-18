@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/shared/PageHeader";
 import ClickableStat from "@/components/shared/ClickableStat";
 import AnimalListPanel from "@/components/shared/AnimalListPanel";
-import { formatCurrency, formatWeight } from "@/lib/helpers";
+import InversionDetailPanel from "@/components/shared/InversionDetailPanel";
+import { formatCurrency, formatWeight, inversionAnimal } from "@/lib/helpers";
 
 const CowIcon = (props) => (
   <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -28,6 +29,7 @@ const CowIcon = (props) => (
 export default function Bovinos() {
   const navigate = useNavigate();
   const [panel, setPanel] = useState({ open: false, title: "", description: "", animals: [] });
+  const [inversionOpen, setInversionOpen] = useState(false);
   const { data: animals = [] } = useQuery({
     queryKey: ["animals"],
     queryFn: () => base44.entities.Animal.list(),
@@ -42,7 +44,7 @@ export default function Bovinos() {
   const machos = activos.filter(a => a.sexo === "macho");
   const pesos = activos.filter(a => a.ultimo_peso).map(a => a.ultimo_peso);
   const pesoPromedio = pesos.length ? Math.round(pesos.reduce((s, p) => s + p, 0) / pesos.length) : 0;
-  const totalInv = animals.reduce((s, a) => s + (a.precio_compra || 0), 0);
+  const totalInv = animals.reduce((s, a) => s + inversionAnimal(a), 0);
   const totalGastos = gastos.filter(g => g.especie === "bovino" || g.especie === "general" || !g.especie).reduce((s, g) => s + (g.valor || 0), 0);
   const totalVentas = ventas.filter(v => v.especie === "bovino" || !v.especie).reduce((s, v) => s + (v.precio_total || 0), 0);
 
@@ -75,7 +77,7 @@ export default function Bovinos() {
 
       {/* Financiero */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <ClickableStat label="Inversión total" value={formatCurrency(totalInv)} sub="Compra de animales" large onClick={() => openPanel("Inversión total", "Animales con precio de compra", animals.filter(a => a.precio_compra))} />
+        <ClickableStat label="Inversión total" value={formatCurrency(totalInv)} sub="Compra de animales + costos iniciales" large onClick={() => setInversionOpen(true)} />
         <ClickableStat label="Gastos totales" value={formatCurrency(totalGastos)} sub="Operación bovina" large onClick={() => navigate("/gastos")} />
         <ClickableStat label="Ventas" value={formatCurrency(totalVentas)} sub={`Utilidad: ${formatCurrency(totalVentas - totalInv - totalGastos)}`} large onClick={() => navigate("/ventas?especie=bovino")} />
       </div>
@@ -133,6 +135,14 @@ export default function Bovinos() {
         title={panel.title}
         description={panel.description}
         animals={panel.animals}
+      />
+
+      <InversionDetailPanel
+        open={inversionOpen}
+        onOpenChange={setInversionOpen}
+        title="Inversión total · Bovinos"
+        description="Detalle financiero de compra de animales y costos iniciales asociados"
+        animals={animals}
       />
     </div>
   );

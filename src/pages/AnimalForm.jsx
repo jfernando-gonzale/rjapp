@@ -179,8 +179,9 @@ export default function AnimalForm() {
         <Card className="p-5 space-y-4 mb-4">
           <h2 className="font-heading font-semibold text-sm text-muted-foreground uppercase tracking-wider">Datos básicos</h2>
 
-          {/* Especie - solo se muestra si no viene preset de un módulo específico */}
-          {!presetEspecie && (
+          {/* Especie: al editar un animal existente la especie queda bloqueada (no se puede cambiar).
+              Al crear nuevo sin preset, se muestra el selector. Con preset (desde módulo de especie) se muestra fija. */}
+          {!isEditing && !presetEspecie && (
             <div>
               <Label>Especie *</Label>
               <div className="flex gap-2 mt-1">
@@ -205,10 +206,13 @@ export default function AnimalForm() {
               </div>
             </div>
           )}
-          {presetEspecie && (
+          {(isEditing || presetEspecie) && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Especie:</span>
               <span className="font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-800">{especieLabels[especie]}</span>
+              {isEditing && (
+                <span className="text-[11px] text-muted-foreground italic">La especie no se puede cambiar en edición</span>
+              )}
             </div>
           )}
 

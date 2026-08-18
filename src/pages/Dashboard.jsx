@@ -4,7 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Scale, Syringe, DollarSign, ShoppingCart, BarChart3, Bell, TrendingUp, Baby, Truck, Users, Layers, MapPin, Sparkles, AlertTriangle, Target } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/helpers";
+import { formatCurrency, inversionAnimal } from "@/lib/helpers";
+import InversionDetailPanel from "@/components/shared/InversionDetailPanel";
 import { buildProductiveAlerts, getThresholds, getSaleWeights } from "@/lib/gananciaUtils";
 import RJLogo from "@/components/RJLogo";
 import { CowIcon, SheepIcon, HorseIcon } from "@/components/shared/SpeciesIcons";
@@ -26,6 +27,8 @@ const SPECIES = [
 
 export default function Dashboard() {
   const [specieFilter, setSpecieFilter] = useState("todos");
+  const [inversionOpen, setInversionOpen] = useState(false);
+  const [inversionAnimals, setInversionAnimals] = useState([]);
 
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
   const { data: yeguas = [] } = useQuery({ queryKey: ["yeguas"], queryFn: () => base44.entities.Yegua.list() });
@@ -61,7 +64,7 @@ export default function Dashboard() {
       const vendidos = animals.filter(a => a.estado === "vendido");
       const totalGastos = gastos.reduce((s, g) => s + (g.valor || 0), 0);
       const totalVentas = ventas.reduce((s, v) => s + (v.precio_total || 0), 0);
-      const totalInv = animals.reduce((s, a) => s + (a.precio_compra || 0), 0);
+      const totalInv = animals.reduce((s, a) => s + inversionAnimal(a), 0);
       const totalActivos = bovinosActivos + ovinosActivos + equinosActivos;
       return [
         { label: "Bovinos activos", value: bovinosActivos, sub: `${bovinos.length} total`, Icon: CowIcon, accent: false },
@@ -70,6 +73,7 @@ export default function Dashboard() {
         { label: "Total activos", value: totalActivos, sub: `${vendidos.length} vendidos`, Icon: null, accent: false },
         { label: "Total gastos", value: formatCurrency(totalGastos), sub: "Todos los gastos", Icon: null, accent: false, large: true },
         { label: "Total ventas", value: formatCurrency(totalVentas), sub: `Utilidad: ${formatCurrency(totalVentas - totalInv - totalGastos)}`, Icon: null, accent: (totalVentas - totalInv - totalGastos) >= 0, large: true },
+        { label: "Inversión total", value: formatCurrency(totalInv), sub: "Compra + costos iniciales", Icon: null, accent: false, large: true, onClick: () => { setInversionAnimals(animals); setInversionOpen(true); } },
       ];
     }
 
@@ -83,13 +87,14 @@ export default function Dashboard() {
       const pesoPromedio = pesos.length ? Math.round(pesos.reduce((s, p) => s + p, 0) / pesos.length) : 0;
       const totalGBov = gBov.reduce((s, g) => s + (g.valor || 0), 0);
       const totalVBov = vBov.reduce((s, v) => s + (v.precio_total || 0), 0);
-      const totalInvBov = bov.reduce((s, a) => s + (a.precio_compra || 0), 0);
+      const totalInvBov = bov.reduce((s, a) => s + inversionAnimal(a), 0);
       return [
         { label: "Bovinos activos", value: activos.length, sub: `${bov.filter(a => a.estado === "vendido").length} vendidos`, Icon: CowIcon, accent: false },
         { label: "Hembras reproductivas", value: hembras.length, sub: "Total hembras", Icon: null, accent: false },
         { label: "Peso promedio", value: pesoPromedio > 0 ? `${pesoPromedio} kg` : "—", sub: "Animales activos", Icon: null, accent: false },
         { label: "Gastos bovinos", value: formatCurrency(totalGBov), sub: "Total gastos", Icon: null, accent: false, large: true },
         { label: "Ventas bovinas", value: formatCurrency(totalVBov), sub: `Utilidad: ${formatCurrency(totalVBov - totalInvBov - totalGBov)}`, Icon: null, accent: (totalVBov - totalInvBov - totalGBov) >= 0, large: true },
+        { label: "Inversión total", value: formatCurrency(totalInvBov), sub: "Compra + costos iniciales", Icon: null, accent: false, large: true, onClick: () => { setInversionAnimals(bov); setInversionOpen(true); } },
       ];
     }
 
@@ -102,13 +107,14 @@ export default function Dashboard() {
       const vOvi = ventas.filter(v => v.especie === "ovino");
       const totalGOvi = gOvi.reduce((s, g) => s + (g.valor || 0), 0);
       const totalVOvi = vOvi.reduce((s, v) => s + (v.precio_total || 0), 0);
-      const totalInvOvi = ovi.reduce((s, a) => s + (a.precio_compra || 0), 0);
+      const totalInvOvi = ovi.reduce((s, a) => s + inversionAnimal(a), 0);
       return [
         { label: "Ovinos activos", value: activos.length, sub: `${ovi.filter(a => a.estado === "vendido").length} vendidos`, Icon: SheepIcon, accent: false },
         { label: "Ovejas (hembras)", value: hembras.length, sub: "Reproductoras", Icon: null, accent: false },
         { label: "Carneros (machos)", value: machos.length, sub: "Reproductores", Icon: null, accent: false },
         { label: "Gastos ovinos", value: formatCurrency(totalGOvi), sub: "Total gastos", Icon: null, accent: false, large: true },
         { label: "Ventas ovinas", value: formatCurrency(totalVOvi), sub: `Utilidad: ${formatCurrency(totalVOvi - totalInvOvi - totalGOvi)}`, Icon: null, accent: (totalVOvi - totalInvOvi - totalGOvi) >= 0, large: true },
+        { label: "Inversión total", value: formatCurrency(totalInvOvi), sub: "Compra + costos iniciales", Icon: null, accent: false, large: true, onClick: () => { setInversionAnimals(ovi); setInversionOpen(true); } },
       ];
     }
 
@@ -241,8 +247,8 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {stats.map((s, i) => (
-          <Link to={getStatLink(s.label)} key={i}>
+        {stats.map((s, i) => {
+          const inner = (
             <Card className={`p-4 ${s.accent ? "border-amber-400 border-2" : ""} hover:shadow-md hover:border-amber-400 hover:-translate-y-0.5 transition-all cursor-pointer group h-full`}>
               <div className="flex flex-col gap-1">
                 <p className="text-xs text-muted-foreground font-medium">{s.label}</p>
@@ -254,8 +260,13 @@ export default function Dashboard() {
                 <p className="text-[10px] text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">Ver detalle →</p>
               </div>
             </Card>
-          </Link>
-        ))}
+          );
+          return s.onClick ? (
+            <div key={i} onClick={s.onClick} className="h-full">{inner}</div>
+          ) : (
+            <Link to={getStatLink(s.label)} key={i}>{inner}</Link>
+          );
+        })}
       </div>
 
       {/* Quick Actions */}
@@ -425,6 +436,14 @@ export default function Dashboard() {
         lotes={lotes}
         fincas={fincas}
         user={user}
+      />
+
+      <InversionDetailPanel
+        open={inversionOpen}
+        onOpenChange={setInversionOpen}
+        title="Inversión total"
+        description="Detalle financiero de compra de animales y costos iniciales asociados"
+        animals={inversionAnimals}
       />
     </div>
   );

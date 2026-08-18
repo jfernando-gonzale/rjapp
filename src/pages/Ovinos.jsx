@@ -8,11 +8,13 @@ import { SheepIcon } from "@/components/shared/SpeciesIcons";
 import PageHeader from "@/components/shared/PageHeader";
 import ClickableStat from "@/components/shared/ClickableStat";
 import AnimalListPanel from "@/components/shared/AnimalListPanel";
-import { formatCurrency } from "@/lib/helpers";
+import InversionDetailPanel from "@/components/shared/InversionDetailPanel";
+import { formatCurrency, inversionAnimal } from "@/lib/helpers";
 
 export default function Ovinos() {
   const navigate = useNavigate();
   const [panel, setPanel] = useState({ open: false, title: "", description: "", animals: [] });
+  const [inversionOpen, setInversionOpen] = useState(false);
   const { data: animals = [] } = useQuery({
     queryKey: ["animals"],
     queryFn: () => base44.entities.Animal.list(),
@@ -26,7 +28,7 @@ export default function Ovinos() {
   const ovejas = activos.filter(a => a.sexo === "hembra");
   const carneros = activos.filter(a => a.sexo === "macho");
   const corderos = activos.filter(a => a.mother_id || a.fecha_nacimiento);
-  const totalInv = animals.reduce((s, a) => s + (a.precio_compra || 0), 0);
+  const totalInv = animals.reduce((s, a) => s + inversionAnimal(a), 0);
   const totalGastos = gastos.filter(g => g.especie === "ovino").reduce((s, g) => s + (g.valor || 0), 0);
   const totalVentas = ventas.filter(v => v.especie === "ovino").reduce((s, v) => s + (v.precio_total || 0), 0);
 
@@ -58,7 +60,7 @@ export default function Ovinos() {
 
       {/* Financiero */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <ClickableStat label="Inversión total" value={formatCurrency(totalInv)} sub="Compra de ovinos" large onClick={() => openPanel("Inversión total", "Animales con precio de compra", animals.filter(a => a.precio_compra))} />
+        <ClickableStat label="Inversión total" value={formatCurrency(totalInv)} sub="Compra de ovinos + costos iniciales" large onClick={() => setInversionOpen(true)} />
         <ClickableStat label="Gastos ovinos" value={formatCurrency(totalGastos)} sub="Operación ovina" large onClick={() => navigate("/gastos")} />
         <ClickableStat label="Ventas ovinas" value={formatCurrency(totalVentas)} sub={`Utilidad: ${formatCurrency(totalVentas - totalInv - totalGastos)}`} large onClick={() => navigate("/ventas?especie=ovino")} />
       </div>
@@ -127,6 +129,14 @@ export default function Ovinos() {
         title={panel.title}
         description={panel.description}
         animals={panel.animals}
+      />
+
+      <InversionDetailPanel
+        open={inversionOpen}
+        onOpenChange={setInversionOpen}
+        title="Inversión total · Ovinos"
+        description="Detalle financiero de compra de animales y costos iniciales asociados"
+        animals={animals}
       />
     </div>
   );
