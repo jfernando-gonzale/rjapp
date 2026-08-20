@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { ArrowLeft, Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import { ESTADO_REPRODUCTIVO, TIPO_YEGUA } from "@/lib/caballos";
 import RazaEquinaSelect from "@/components/shared/RazaEquinaSelect";
 import FechaNacimientoEdad from "@/components/shared/FechaNacimientoEdad";
+import { validarDuplicado } from "@/lib/duplicados";
 import { toast } from "sonner";
 
 export default function YeguaForm() {
@@ -20,6 +22,7 @@ export default function YeguaForm() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: fincas = [] } = useQuery({
     queryKey: ["fincas"],
@@ -30,6 +33,14 @@ export default function YeguaForm() {
     queryKey: ["lotes"],
     queryFn: () => base44.entities.Lote.list(),
   });
+
+  const { data: todasYeguas = [] } = useQuery({
+    queryKey: ["yeguas"],
+    queryFn: () => base44.entities.Yegua.list(),
+  });
+
+  // Aislamiento: solo validar contra las yeguas del usuario actual.
+  const misYeguas = useMemo(() => (todasYeguas || []).filter((y) => y.created_by_id === user?.id), [todasYeguas, user]);
 
   const { data: yeguaExistente } = useQuery({
     queryKey: ["yegua", id],
@@ -68,6 +79,18 @@ export default function YeguaForm() {
       observaciones: "",
     };
   });
+
+  // Validación de número/chapeta de yegua: misma finca + usuario, no retirada.
+  const validacionNumero = useMemo(
+    () => validarDuplicado({
+      numero: formData.numero,
+      finca_id: formData.finca_id,
+      animales: misYeguas,
+      excludeId: isEdit ? id : null,
+      isActiveFn: (y) => y.estado_reproductivo !== "retirada",
+    }),
+    [formData.numero, formData.finca_id, misYeguas, isEdit, id]
+  );
 
   const lotesFinca = lotes.filter(l => l.finca_id === formData.finca_id);
 
@@ -157,6 +180,15 @@ export default function YeguaForm() {
                 onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
                 placeholder="Ej: 001"
               />
+              {validacionNumero.status === "duplicado_activo" && (
+                <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Ya existe una yegua con este número en esta finca.</p>
+              )}
+              {validacionNumero.status === "usado_anteriormente" && (
+                <p className="text-xs text-amber-600 mt-1">Este número fue usado antes en una yegua retirada. Puedes reutilizarlo si es correcto.</p>
+              )}
+              {validacionNumero.status === "disponible" && formData.numero && (
+                <p className="text-xs text-emerald-600 mt-1">✓ Número disponible.</p>
+              )}
             </div>
           </div>
 
@@ -278,7 +310,7 @@ export default function YeguaForm() {
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={saveMutation.isPending} className="gap-2">
+          <Button type="submit" disabled={saveMutation.isPending || validacionNumero.status === "duplicado_activo"} className="gap-2">
             <Save className="w-4 h-4" />
             {saveMutation.isPending ? "Guardando..." : "Guardar"}
           </Button>

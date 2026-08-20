@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, ArrowLeft, Copy, Upload, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Copy, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import { formatCurrency, SEXO_ANIMAL, getRazasByEspecie, ESPECIES, parseMoney } from "@/lib/helpers";
+import { normalizeNumero } from "@/lib/duplicados";
 import MoneyInput from "@/components/shared/MoneyInput";
 import ImportCsvDialog from "@/components/shared/ImportCsvDialog";
 import { exportToCsv } from "@/lib/csv";
@@ -22,10 +24,14 @@ const emptyRow = { numero: "", peso_compra: "", precio_individual: "", color: ""
 export default function RegistroMasivo() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
+
+  // Aislamiento: solo validar contra los animales del usuario actual.
+  const misAnimales = useMemo(() => (animals || []).filter((a) => a.created_by_id === user?.id), [animals, user]);
 
   // Datos comunes del grupo
   const [especie, setEspecie] = useState("bovino");
@@ -94,15 +100,58 @@ export default function RegistroMasivo() {
     })));
   };
 
-  const existingNumeros = useMemo(() => {
+  // Números/chapetas ya existentes en inventario ACTIVO de la misma especie y finca (usuario actual).
+  const numerosActivos = useMemo(() => {
     const set = new Set();
-    animals.filter((a) => (a.especie || "bovino") === especie).forEach((a) => set.add(a.numero));
+    misAnimales
+      .filter((a) => (a.especie || "bovino") === especie && a.estado === "activo" && a.finca_id === fincaId)
+      .forEach((a) => set.add(normalizeNumero(a.numero)));
     return set;
-  }, [animals, especie]);
+  }, [misAnimales, especie, fincaId]);
+
+  // Duplicados dentro del mismo lote/archivo, por índice de fila (sobre `rows`).
+  const intraDupRowIdxs = useMemo(() => {
+    const vistos = new Map();
+    const dups = new Set();
+    rows.forEach((r, idx) => {
+      const norm = normalizeNumero(r.numero);
+      if (!norm) return;
+      if (vistos.has(norm)) {
+        dups.add(idx);
+        dups.add(vistos.get(norm));
+      } else {
+        vistos.set(norm, idx);
+      }
+    });
+    return dups;
+  }, [rows]);
+
+  // Resumen de problemas (por número) para bloquear el guardado.
+  const problemas = useMemo(() => {
+    const lista = [];
+    const vistos = new Set();
+    rows.forEach((r, idx) => {
+      const norm = normalizeNumero(r.numero);
+      if (!norm) return;
+      const key = `${norm}`;
+      if (intraDupRowIdxs.has(idx)) {
+        if (!vistos.has(key)) { lista.push({ numero: r.numero, tipo: "repetido_lote" }); vistos.add(key); }
+      } else if (numerosActivos.has(norm)) {
+        if (!vistos.has(key)) { lista.push({ numero: r.numero, tipo: "existe_activo" }); vistos.add(key); }
+      }
+    });
+    return lista;
+  }, [rows, intraDupRowIdxs, numerosActivos]);
+
+  const hayProblemas = problemas.length > 0;
 
   const handleGuardar = async () => {
     if (!fincaId) { alert("Selecciona una finca"); return; }
     if (numAnimales === 0) { alert("Agrega al menos un animal con número"); return; }
+    if (hayProblemas) {
+      alert("Hay números repetidos o que ya existen en el inventario activo. Corrígelos antes de guardar.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -164,8 +213,7 @@ export default function RegistroMasivo() {
       queryClient.invalidateQueries({ queryKey: ["gastos"] });
       queryClient.invalidateQueries({ queryKey: ["eventos_calendario"] });
 
-      const duplicados = created.filter((a) => existingNumeros.has(a.numero)).length;
-      setSummary({ creados: created.length, duplicados, total: total || null });
+      setSummary({ creados: created.length, duplicados: 0, total: total || null });
     } catch (err) {
       alert("Error al guardar: " + (err.message || "desconocido"));
     } finally {
@@ -193,7 +241,7 @@ export default function RegistroMasivo() {
     );
   }
 
-  const canSubmit = fincaId && numAnimales > 0 && !saving;
+  const canSubmit = fincaId && numAnimales > 0 && !saving && !hayProblemas;
 
   return (
     <div>
@@ -312,14 +360,18 @@ export default function RegistroMasivo() {
               </thead>
               <tbody>
                 {rows.map((row, idx) => {
-                  const existe = row.numero && existingNumeros.has(row.numero.trim());
+                  const norm = normalizeNumero(row.numero);
+                  const intraDup = intraDupRowIdxs.has(idx);
+                  const existeActivo = norm && numerosActivos.has(norm);
+                  const esProblema = intraDup || existeActivo;
                   const costo = getCostoPorAnimal(row);
                   const precioKilo = getPrecioKilo(row);
                   return (
                     <tr key={idx} className="border-t">
                       <td className="p-1.5">
-                        <Input value={row.numero} onChange={(e) => updateRow(idx, "numero", e.target.value)} className={`h-8 ${existe ? "border-amber-400" : ""}`} placeholder="#" />
-                        {existe && <span className="text-[10px] text-amber-600">ya existe</span>}
+                        <Input value={row.numero} onChange={(e) => updateRow(idx, "numero", e.target.value)} className={`h-8 ${esProblema ? "border-red-400" : ""}`} placeholder="#" />
+                        {intraDup && <span className="text-[10px] text-red-600">repetido en este lote</span>}
+                        {!intraDup && existeActivo && <span className="text-[10px] text-red-600">ya existe activo</span>}
                       </td>
                       <td className="p-1.5"><Input type="number" value={row.peso_compra} onChange={(e) => updateRow(idx, "peso_compra", e.target.value)} className="h-8 w-20" /></td>
                       <td className="p-1.5"><MoneyInput value={row.precio_individual} onChange={(v) => updateRow(idx, "precio_individual", v)} className="h-8 w-24" /></td>
@@ -336,6 +388,18 @@ export default function RegistroMasivo() {
           </div>
 
           <Button variant="outline" size="sm" onClick={addRow} className="gap-2"><Plus className="w-4 h-4" /> Agregar fila</Button>
+
+          {hayProblemas && (
+            <div className="rounded-lg border border-red-300 bg-red-50 p-3 space-y-1">
+              <p className="text-sm font-semibold text-red-800 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" /> No se puede guardar: hay números con conflicto.</p>
+              <ul className="text-xs text-red-700 space-y-0.5">
+                {problemas.map((p, i) => (
+                  <li key={i}>• <strong>#{p.numero}</strong> — {p.tipo === "repetido_lote" ? "repetido dentro de este registro masivo." : "ya existe en un animal activo de esta finca y especie."}</li>
+                ))}
+              </ul>
+              <p className="text-xs text-red-600">Corrige o elimina esos números para continuar. Si el número pertenece a un animal que ya no está activo, puedes reutilizarlo.</p>
+            </div>
+          )}
 
           <div className="flex justify-end pt-2">
             <Button onClick={handleGuardar} disabled={!canSubmit} className="gap-2 h-12 px-8">

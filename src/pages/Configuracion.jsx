@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, Save, Check, LogOut, FlaskConical, Trash2, Loader2 } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
+import RevisionDuplicados from "@/components/shared/RevisionDuplicados";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -303,6 +304,8 @@ export default function Configuracion() {
           <p className="text-xs text-muted-foreground mt-1">Define cómo se reparten los gastos de lote/finca entre los animales al calcular costos.</p>
         </div>
       </Card>
+
+      <RevisionDuplicados />
 
       <Button onClick={handleSave} className="w-full h-12 gap-2" disabled={updateMutation.isPending}>
         {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}

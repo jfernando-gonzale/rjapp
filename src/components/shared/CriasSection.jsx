@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Baby } from "lucide-react";
 import { getRazasByEspecie } from "@/lib/helpers";
+import { validarDuplicado, normalizeNumero, especieLabelLower } from "@/lib/duplicados";
 
 /**
  * Sección reutilizable para registrar crías desde el formulario de la madre.
@@ -31,9 +33,13 @@ const RESULTADO_CRIA = {
 export default function CriasSection({ especie, motherFincaId, motherLoteId, sexoMadre, onCriasChange }) {
   const [crias, setCrias] = useState([]);
 
+  const { user } = useAuth();
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
   const { data: allAnimals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
+
+  // Aislamiento: solo validar contra los animales del usuario actual.
+  const misAnimales = useMemo(() => (allAnimals || []).filter((a) => a.created_by_id === user?.id), [allAnimals, user]);
 
   // Padres potenciales: machos de la misma especie
   const padres = allAnimals.filter(a => (a.especie || "bovino") === especie && a.sexo === "macho" && a.estado === "activo");
@@ -99,7 +105,11 @@ export default function CriasSection({ especie, motherFincaId, motherLoteId, sex
       ) : (
         <div className="space-y-3">
           {crias.map((c, idx) => {
-            const dupNum = c.numero && allAnimals.find(a => a.numero === c.numero && (a.especie || "bovino") === especie);
+            const fincaCria = c.finca_id || motherFincaId;
+            const vCria = validarDuplicado({ numero: c.numero, especie, finca_id: fincaCria, animales: misAnimales });
+            // Duplicado dentro de la misma camada/parto
+            const intraDup = c.numero && crias.some((o, j) => j !== idx && normalizeNumero(o.numero) === normalizeNumero(c.numero));
+            const esDupActivo = vCria.status === "duplicado_activo" || intraDup;
             return (
               <div key={idx} className="rounded-lg border p-3 space-y-3 bg-muted/20">
                 <div className="flex items-center justify-between">
@@ -112,8 +122,10 @@ export default function CriasSection({ especie, motherFincaId, motherLoteId, sex
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Número / Chapeta</Label>
-                    <Input value={c.numero} onChange={(e) => updateCria(idx, "numero", e.target.value)} placeholder="Ej: 5140" className={dupNum ? "border-red-400" : ""} />
-                    {dupNum && <p className="text-[11px] text-red-600 mt-0.5">Ya existe este número</p>}
+                    <Input value={c.numero} onChange={(e) => updateCria(idx, "numero", e.target.value)} placeholder="Ej: 5140" className={esDupActivo ? "border-red-400" : ""} />
+                    {intraDup && <p className="text-[11px] text-red-600 mt-0.5">Este número está repetido entre las crías de este parto.</p>}
+                    {!intraDup && vCria.status === "duplicado_activo" && <p className="text-[11px] text-red-600 mt-0.5">Ya existe un {especieLabelLower(especie)} activo con este número en esta finca.</p>}
+                    {!intraDup && vCria.status === "usado_anteriormente" && <p className="text-[11px] text-amber-600 mt-0.5">Número usado antes en un animal no activo. Puedes reutilizarlo.</p>}
                   </div>
                   <div>
                     <Label className="text-xs">Nombre (opcional)</Label>

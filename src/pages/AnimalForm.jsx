@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { validarDuplicado, normalizeNumero, especieLabelLower } from "@/lib/duplicados";
+import NumeroValidationMessage from "@/components/shared/NumeroValidationMessage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +27,7 @@ export default function AnimalForm() {
   const [moreDetails, setMoreDetails] = useState(false);
   const [especie, setEspecie] = useState(presetEspecie || "bovino");
   const [dupError, setDupError] = useState(null);
+  const [numeroForm, setNumeroForm] = useState("");
   const [crias, setCrias] = useState([]);
   const [sexoForm, setSexoForm] = useState("");
   const [fincaForm, setFincaForm] = useState("");
@@ -43,7 +47,11 @@ export default function AnimalForm() {
 
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
+  const { user } = useAuth();
   const { data: allAnimals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
+
+  // Aislamiento: solo se valida contra los animales del usuario actual (propietario/tenant).
+  const misAnimales = useMemo(() => (allAnimals || []).filter((a) => a.created_by_id === user?.id), [allAnimals, user]);
 
   useEffect(() => {
     if (animal) {
@@ -56,6 +64,7 @@ export default function AnimalForm() {
       setPrecioKilo(animal.precio_kilo_compra?.toString() || "");
       setFechaNacimiento(animal.fecha_nacimiento || "");
       setEdadAprox(animal.edad_aproximada || "");
+      setNumeroForm(animal.numero || "");
     }
   }, [animal]);
 
@@ -67,11 +76,19 @@ export default function AnimalForm() {
     }
   }, [pesoCompra, precioKilo]);
 
+  // Validación en tiempo real del número/chapeta contra el inventario activo
+  // del mismo usuario, especie y finca.
+  const validacion = useMemo(
+    () => validarDuplicado({ numero: numeroForm, especie, finca_id: fincaForm, animales: misAnimales, excludeId: isEditing ? id : null }),
+    [numeroForm, especie, fincaForm, misAnimales, isEditing, id]
+  );
+
   const crearCrias = async (motherId, motherFincaId, motherLoteId) => {
     for (const c of crias) {
       if (c.resultado !== "cria_viva" || !c.crear_inventario || !c.numero) continue;
-      const dup = allAnimals.find(a => a.numero === c.numero && (a.especie || "bovino") === especie);
-      if (dup) continue; // no crear duplicados
+      // No crear crías duplicadas: mismo usuario + especie + finca + número activo
+      const vCria = validarDuplicado({ numero: c.numero, especie, finca_id: c.finca_id || motherFincaId, animales: misAnimales });
+      if (vCria.status === "duplicado_activo") continue;
       await base44.entities.Animal.create({
         especie,
         numero: c.numero,
@@ -141,11 +158,11 @@ export default function AnimalForm() {
     } else if (edadAprox) {
       data.edad_aproximada = edadAprox;
     }
-    // Validar duplicado: mismo número + misma especie (excluyendo el actual si edita)
+    // Validar duplicado activo: mismo usuario + especie + finca + número + estado activo
     if (data.numero) {
-      const dup = allAnimals.find(a => a.numero === data.numero && (a.especie || "bovino") === especie && a.id !== id);
-      if (dup) {
-        setDupError(dup);
+      const v = validarDuplicado({ numero: data.numero, especie, finca_id: data.finca_id || fincaForm, animales: misAnimales, excludeId: isEditing ? id : null });
+      if (v.status === "duplicado_activo") {
+        setDupError(v.animalActivo);
         return;
       }
     }
@@ -219,7 +236,8 @@ export default function AnimalForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Número / Chapeta *</Label>
-              <Input name="numero" defaultValue={defaults.numero} required placeholder="Ej: 101" />
+              <Input name="numero" value={numeroForm} onChange={(e) => setNumeroForm(e.target.value)} required placeholder="Ej: 101" />
+              <NumeroValidationMessage validacion={validacion} especieLabel={especieLabelLower(especie)} />
             </div>
             <div>
               <Label>Nombre (opcional)</Label>
@@ -423,7 +441,7 @@ export default function AnimalForm() {
         <Button
           type="submit"
           className="w-full h-12 text-base font-semibold"
-          disabled={createMutation.isPending || updateMutation.isPending}
+          disabled={createMutation.isPending || updateMutation.isPending || validacion.status === "duplicado_activo"}
         >
           {isEditing ? "Guardar cambios" : `Registrar ${especieLabels[especie]}`}
         </Button>
