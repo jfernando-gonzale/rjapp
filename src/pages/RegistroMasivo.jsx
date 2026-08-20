@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,14 +23,12 @@ const emptyRow = { numero: "", peso_compra: "", precio_individual: "", color: ""
 export default function RegistroMasivo() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
   const { data: animals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
 
-  // Aislamiento: solo validar contra los animales del usuario actual.
-  const misAnimales = useMemo(() => (animals || []).filter((a) => a.created_by_id === user?.id), [animals, user]);
+  // Validamos contra la misma lista que alimenta el inventario visible (ya aislada por RLS).
+  const misAnimales = animals || [];
 
   // Datos comunes del grupo
   const [especie, setEspecie] = useState("bovino");

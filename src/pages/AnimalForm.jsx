@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
 import { validarDuplicado, normalizeNumero, especieLabelLower } from "@/lib/duplicados";
 import NumeroValidationMessage from "@/components/shared/NumeroValidationMessage";
 import { Card } from "@/components/ui/card";
@@ -47,11 +46,12 @@ export default function AnimalForm() {
 
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
-  const { user } = useAuth();
   const { data: allAnimals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
 
-  // Aislamiento: solo se valida contra los animales del usuario actual (propietario/tenant).
-  const misAnimales = useMemo(() => (allAnimals || []).filter((a) => a.created_by_id === user?.id), [allAnimals, user]);
+  // Validamos contra la misma lista que alimenta el inventario visible (ya aislada por RLS).
+  // Un usuario normal solo ve sus propios animales; el admin ve todos. No filtramos por
+  // created_by_id porque eso excluía animales que el admin sí ve y no debería duplicar.
+  const misAnimales = allAnimals || [];
 
   useEffect(() => {
     if (animal) {
@@ -237,7 +237,11 @@ export default function AnimalForm() {
             <div>
               <Label>Número / Chapeta *</Label>
               <Input name="numero" value={numeroForm} onChange={(e) => setNumeroForm(e.target.value)} required placeholder="Ej: 101" />
-              <NumeroValidationMessage validacion={validacion} especieLabel={especieLabelLower(especie)} />
+              <NumeroValidationMessage
+                validacion={validacion}
+                especieLabel={especieLabelLower(especie)}
+                onVerExistente={validacion.animalActivo ? () => navigate(`/animales/${validacion.animalActivo.id}`) : undefined}
+              />
             </div>
             <div>
               <Label>Nombre (opcional)</Label>

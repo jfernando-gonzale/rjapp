@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
 import { ArrowLeft, Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +21,6 @@ export default function YeguaForm() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-
   const { data: fincas = [] } = useQuery({
     queryKey: ["fincas"],
     queryFn: () => base44.entities.Finca.list(),
@@ -39,8 +36,8 @@ export default function YeguaForm() {
     queryFn: () => base44.entities.Yegua.list(),
   });
 
-  // Aislamiento: solo validar contra las yeguas del usuario actual.
-  const misYeguas = useMemo(() => (todasYeguas || []).filter((y) => y.created_by_id === user?.id), [todasYeguas, user]);
+  // Validamos contra la misma lista que alimenta el inventario de yeguas visible (ya aislada por RLS).
+  const misYeguas = todasYeguas || [];
 
   const { data: yeguaExistente } = useQuery({
     queryKey: ["yegua", id],

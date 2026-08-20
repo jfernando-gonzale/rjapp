@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,13 +32,12 @@ const RESULTADO_CRIA = {
 export default function CriasSection({ especie, motherFincaId, motherLoteId, sexoMadre, onCriasChange }) {
   const [crias, setCrias] = useState([]);
 
-  const { user } = useAuth();
   const { data: fincas = [] } = useQuery({ queryKey: ["fincas"], queryFn: () => base44.entities.Finca.list() });
   const { data: lotes = [] } = useQuery({ queryKey: ["lotes"], queryFn: () => base44.entities.Lote.list() });
   const { data: allAnimals = [] } = useQuery({ queryKey: ["animals"], queryFn: () => base44.entities.Animal.list() });
 
-  // Aislamiento: solo validar contra los animales del usuario actual.
-  const misAnimales = useMemo(() => (allAnimals || []).filter((a) => a.created_by_id === user?.id), [allAnimals, user]);
+  // Validamos contra la misma lista que alimenta el inventario visible (ya aislada por RLS).
+  const misAnimales = allAnimals || [];
 
   // Padres potenciales: machos de la misma especie
   const padres = allAnimals.filter(a => (a.especie || "bovino") === especie && a.sexo === "macho" && a.estado === "activo");
