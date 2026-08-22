@@ -40,6 +40,20 @@
       "type": "string",
       "description": "Color del animal"
     },
+    "origen_animal": {
+      "type": "string",
+      "enum": [
+        "compra",
+        "nacido_finca",
+        "transferencia",
+        "otro"
+      ],
+      "description": "Origen del animal. Los nacidos en finca se crean desde Cr\u00edas/Descendencia. Los animales hist\u00f3ricos sin este campo se dejan vac\u00edos (no se inventa informaci\u00f3n)."
+    },
+    "peso_nacimiento": {
+      "type": "number",
+      "description": "Peso al nacimiento en kg (registrado desde Cr\u00edas/Descendencia). Alimenta el primer pesaje y el \u00faltimo peso."
+    },
     "fecha_nacimiento": {
       "type": "string",
       "format": "date",

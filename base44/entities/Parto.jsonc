@@ -4,7 +4,25 @@
   "properties": {
     "yegua_id": {
       "type": "string",
-      "description": "ID de la yegua"
+      "description": "ID de la madre (yegua/oveja/vaca). Se reutiliza como identificador gen\u00e9rico de la madre para todos los species."
+    },
+    "madre_id": {
+      "type": "string",
+      "description": "ID de la madre (alias de yegua_id, para claridad en bovinos/ovinos)."
+    },
+    "especie": {
+      "type": "string",
+      "enum": [
+        "bovino",
+        "ovino",
+        "equino"
+      ],
+      "default": "equino",
+      "description": "Especie de la madre/parto"
+    },
+    "padre_id": {
+      "type": "string",
+      "description": "ID del padre/reproductor (si se conoce)"
     },
     "finca_id": {
       "type": "string",
@@ -20,11 +38,14 @@
       "enum": [
         "cria_viva",
         "cria_muerta",
+        "mortinato",
+        "fallecida_nacer",
         "aborto",
-        "complicacion"
+        "complicacion",
+        "otro"
       ],
       "default": "cria_viva",
-      "description": "Resultado del parto"
+      "description": "Resultado global del parto"
     },
     "sexo_cria": {
       "type": "string",
@@ -34,19 +55,32 @@
         "no_registrado"
       ],
       "default": "no_registrado",
-      "description": "Sexo de la cr\u00eda"
+      "description": "Sexo de la cr\u00eda (flujo equino de una sola cr\u00eda)"
     },
     "nombre_cria": {
       "type": "string",
-      "description": "Nombre o n\u00famero de la cr\u00eda"
+      "description": "Nombre o n\u00famero de la cr\u00eda (flujo equino de una sola cr\u00eda)"
     },
     "color_cria": {
       "type": "string",
-      "description": "Color de la cr\u00eda"
+      "description": "Color de la cr\u00eda (flujo equino de una sola cr\u00eda)"
     },
     "cria_id": {
       "type": "string",
-      "description": "ID de la cr\u00eda creada"
+      "description": "ID de la cr\u00eda creada (flujo equino de una sola cr\u00eda)"
+    },
+    "numero_crias": {
+      "type": "number",
+      "default": 1,
+      "description": "N\u00famero total de cr\u00edas del parto (incluye no vivas para reportes reproductivos)"
+    },
+    "crias_ids": {
+      "type": "string",
+      "description": "JSON con array de IDs de las cr\u00edas vivas creadas en inventario: [\"id1\",\"id2\"]"
+    },
+    "crias_metadata": {
+      "type": "string",
+      "description": "JSON con metadata de todas las cr\u00edas del parto (vivas y no vivas) para reportes: [{numero,sexo,peso_nacimiento,resultado,...}]"
     },
     "observaciones": {
       "type": "string",
@@ -54,7 +88,6 @@
     }
   },
   "required": [
-    "yegua_id",
     "fecha",
     "resultado"
   ],

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
@@ -24,9 +24,12 @@ import { validarDuplicado, normalizeNumero, especieLabelLower } from "@/lib/dupl
  */
 const RESULTADO_CRIA = {
   cria_viva: "Cría viva",
+  mortinato: "Mortinato",
+  fallecida_nacer: "Fallecida al nacer",
   cria_muerta: "Cría muerta",
   aborto: "Aborto",
   complicacion: "Complicación",
+  otro: "Otro",
 };
 
 export default function CriasSection({ especie, motherFincaId, motherLoteId, sexoMadre, onCriasChange }) {
@@ -64,6 +67,7 @@ export default function CriasSection({ especie, motherFincaId, motherLoteId, sex
       observaciones: "",
       crear_inventario: true,
       resultado: "cria_viva",
+      peso_nacimiento: "",
     }]);
   };
 
@@ -142,6 +146,20 @@ export default function CriasSection({ especie, motherFincaId, motherLoteId, sex
                   <div>
                     <Label className="text-xs">Fecha de nacimiento</Label>
                     <Input type="date" value={c.fecha_nacimiento} onChange={(e) => updateCria(idx, "fecha_nacimiento", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Peso al nacimiento (kg)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={c.peso_nacimiento}
+                      onChange={(e) => updateCria(idx, "peso_nacimiento", e.target.value)}
+                      placeholder="Ej: 3,6"
+                      disabled={c.resultado !== "cria_viva"}
+                    />
+                    {c.resultado === "cria_viva" && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Crea el primer pesaje y actualiza "Último peso".</p>
+                    )}
                   </div>
                   <div>
                     <Label className="text-xs">Resultado</Label>

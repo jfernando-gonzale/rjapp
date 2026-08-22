@@ -84,12 +84,59 @@ export default function AnimalForm() {
   );
 
   const crearCrias = async (motherId, motherFincaId, motherLoteId) => {
+    if (!crias.length) return;
+
+    // Evento de parto que agrupa todas las crías de este nacimiento (vivas y no vivas)
+    const fechasNac = crias.map(c => c.fecha_nacimiento).filter(Boolean).sort();
+    const fechaParto = fechasNac[0] || new Date().toISOString().split("T")[0];
+    const algunaViva = crias.some(c => c.resultado === "cria_viva");
+    const primerNoVivo = crias.find(c => c.resultado !== "cria_viva");
+    const resultadoParto = algunaViva ? "cria_viva" : (primerNoVivo?.resultado || "cria_muerta");
+    const padreParto = crias.map(c => c.padre_id).find(Boolean) || "";
+
+    let parto = null;
+    try {
+      parto = await base44.entities.Parto.create({
+        yegua_id: motherId,
+        madre_id: motherId,
+        especie,
+        padre_id: padreParto,
+        finca_id: motherFincaId || "",
+        fecha: fechaParto,
+        resultado: resultadoParto,
+        numero_crias: crias.length,
+        crias_ids: "[]",
+        crias_metadata: JSON.stringify(crias.map(c => ({
+          numero: c.numero || "",
+          nombre: c.nombre || "",
+          sexo: c.sexo || "",
+          fecha_nacimiento: c.fecha_nacimiento || "",
+          peso_nacimiento: c.peso_nacimiento ? parseFloat(c.peso_nacimiento) : null,
+          resultado: c.resultado,
+          raza: c.raza || "",
+          color: c.color || "",
+          padre_id: c.padre_id || "",
+          finca_id: c.finca_id || motherFincaId || "",
+          lote_id: c.lote_id || motherLoteId || "",
+          observaciones: c.observaciones || "",
+        }))),
+      });
+    } catch (e) {
+      console.error("No se pudo crear el parto", e);
+    }
+
+    const criasIds = [];
+    const numerosCreados = new Set();
     for (const c of crias) {
       if (c.resultado !== "cria_viva" || !c.crear_inventario || !c.numero) continue;
       // No crear crías duplicadas: mismo usuario + especie + finca + número activo
       const vCria = validarDuplicado({ numero: c.numero, especie, finca_id: c.finca_id || motherFincaId, animales: misAnimales });
       if (vCria.status === "duplicado_activo") continue;
-      await base44.entities.Animal.create({
+      if (numerosCreados.has(normalizeNumero(c.numero))) continue;
+
+      const pesoNac = c.peso_nacimiento ? parseFloat(c.peso_nacimiento) : null;
+      const pesoValido = pesoNac && !isNaN(pesoNac);
+      const animalData = {
         especie,
         numero: c.numero,
         nombre: c.nombre || "",
@@ -103,7 +150,48 @@ export default function AnimalForm() {
         mother_id: motherId,
         father_id: c.padre_id || "",
         observaciones: c.observaciones || "",
-      });
+        origen_animal: "nacido_finca",
+      };
+      // Una cría nacida en finca NO es compra: no se llenan fecha/precio/vendedor.
+      if (pesoValido) {
+        animalData.peso_nacimiento = pesoNac;
+        animalData.ultimo_peso = pesoNac;
+        animalData.fecha_ultimo_pesaje = c.fecha_nacimiento || fechaParto;
+      }
+      if (parto?.id) animalData.birth_event_id = parto.id;
+
+      try {
+        const nuevaCria = await base44.entities.Animal.create(animalData);
+        numerosCreados.add(normalizeNumero(c.numero));
+        criasIds.push(nuevaCria.id);
+
+        // Primer pesaje automático al nacimiento: alimenta historial, último peso, ganancia, reportes y asistente.
+        if (pesoValido && c.fecha_nacimiento) {
+          try {
+            await base44.entities.Pesaje.create({
+              animal_id: nuevaCria.id,
+              finca_id: animalData.finca_id,
+              lote_id: animalData.lote_id || "",
+              fecha: c.fecha_nacimiento,
+              peso: pesoNac,
+              observaciones: "Pesaje inicial registrado automáticamente al nacimiento.",
+            });
+          } catch (e) {
+            console.error("No se pudo crear el pesaje inicial", e);
+          }
+        }
+      } catch (e) {
+        console.error("No se pudo crear la cría", e);
+      }
+    }
+
+    // Vincula los IDs de las crías vivas creadas al evento de parto
+    if (parto && criasIds.length) {
+      try {
+        await base44.entities.Parto.update(parto.id, { crias_ids: JSON.stringify(criasIds) });
+      } catch (e) {
+        console.error("No se pudo actualizar el parto", e);
+      }
     }
   };
 
@@ -112,6 +200,8 @@ export default function AnimalForm() {
     onSuccess: async (mother) => {
       await crearCrias(mother.id, mother.finca_id, mother.lote_id);
       queryClient.invalidateQueries({ queryKey: ["animals"] });
+      queryClient.invalidateQueries({ queryKey: ["pesajes"] });
+      queryClient.invalidateQueries({ queryKey: ["partos"] });
       navigate("/animales");
     },
   });
@@ -122,6 +212,8 @@ export default function AnimalForm() {
       await crearCrias(id, fincaForm, loteForm);
       queryClient.invalidateQueries({ queryKey: ["animals"] });
       queryClient.invalidateQueries({ queryKey: ["animal", id] });
+      queryClient.invalidateQueries({ queryKey: ["pesajes"] });
+      queryClient.invalidateQueries({ queryKey: ["partos"] });
       navigate(`/animales/${id}`);
     },
   });
@@ -149,6 +241,11 @@ export default function AnimalForm() {
     if (data.peso_compra && !isEditing) {
       data.ultimo_peso = data.peso_compra;
       data.fecha_ultimo_pesaje = data.fecha_compra || new Date().toISOString().split("T")[0];
+    }
+    // Origen del animal: si el formulario principal registra compra, se marca como compra
+    // (solo en creación; no se sobrescribe en edición para no alterar datos existentes).
+    if (!isEditing && (data.fecha_compra || data.peso_compra || data.precio_compra)) {
+      data.origen_animal = "compra";
     }
     // Edad automática desde fecha de nacimiento
     if (fechaNacimiento) {

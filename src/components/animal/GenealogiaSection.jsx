@@ -145,11 +145,16 @@ export default function GenealogiaSection({ animalId, especie }) {
                           <span className="font-semibold text-sm">#{c.numero}</span>
                           {c.nombre && <span className="text-sm text-muted-foreground">({c.nombre})</span>}
                           <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{c.mother_id === animalId ? "Madre" : "Padre"}</span>
+                          {c.origen_animal === "nacido_finca" && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Nacido en finca</span>
+                          )}
                           <StatusBadge status={c.estado} label={ESTADO_ANIMAL[c.estado]} />
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {c.sexo === "hembra" ? "Hembra" : "Macho"}{c.raza ? ` · ${c.raza}` : ""}
                           {c.fecha_nacimiento && ` · Nació ${format(new Date(c.fecha_nacimiento), "dd MMM yyyy", { locale: es })}`}
+                          {c.peso_nacimiento != null && ` · Peso al nacer: ${c.peso_nacimiento} kg`}
+                          {c.ultimo_peso != null && c.peso_nacimiento == null && ` · Último peso: ${c.ultimo_peso} kg`}
                           {otroProgenitor && ` · Otro progenitor: #${otroProgenitor.numero}`}
                         </p>
                       </div>
