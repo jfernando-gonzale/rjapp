@@ -118,18 +118,18 @@ export default function AnimalDetail() {
       </Button>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl lg:text-3xl font-heading font-bold">#{animal.numero}</h1>
-            {animal.nombre && <span className="text-lg text-muted-foreground">({animal.nombre})</span>}
-            <StatusBadge status={animal.estado} label={ESTADO_ANIMAL[animal.estado]} />
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-heading font-bold break-all">#{animal.numero}</h1>
+            {animal.nombre && <span className="text-base sm:text-lg text-muted-foreground break-words">({animal.nombre})</span>}
+            <StatusBadge status={animal.estado} label={ESTADO_ANIMAL[animal.estado]} className="shrink-0" />
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1.5 break-words">
             {getFincaName(animal.finca_id)} • {getLoteName(animal.lote_id)} • {SEXO_ANIMAL[animal.sexo] || "—"} • {animal.raza || "—"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button variant="outline" className="gap-2" onClick={() => exportToCsv(`hoja-vida-${animal.numero || id}.csv`, [{
             numero: animal.numero, especie: animal.especie, nombre: animal.nombre, sexo: animal.sexo, raza: animal.raza, color: animal.color,
             finca: getFincaName(animal.finca_id), lote: getLoteName(animal.lote_id), estado: animal.estado,
